@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EHD İyonik İtici Simülasyon Laboratuvarı</title>
+    <style>
+        :root {
+            --bg-main: #f0f4f8;
+            --bg-panel: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent-blue: #2563eb;
+            --accent-green: #059669;
+            --accent-red: #dc2626;
+            --accent-orange: #d97706;
+            --border-color: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #1e3a8a;
+        }
+
+        .header span {
+            font-size: 28px;
+        }
+
+        /* LABORATUVAR MOD SEÇİCİ */
+        .mode-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            background: var(--bg-panel);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            background: var(--bg-main);
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .mode-btn.active {
+            border-color: var(--accent-blue);
+            background: #eff6ff;
+            color: var(--accent-blue);
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+        }
+
+        .mode-btn:hover:not(.active) {
+            background: #e2e8f0;
+        }
+
+        /* SEKME SİSTEMİ */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background: var(--bg-panel);
+            color: var(--text-muted);
+            transition: 0.2s;
+        }
+
+        .tab:hover {
+            background: #e2e8f0;
+        }
+
+        .tab.active {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        .view-panel {
+            display: none;
+        }
+
+        .view-panel.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 340px 1fr 340px;
+            gap: 20px;
+            height: calc(100vh - 240px);
+            min-height: 650px;
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--bg-main);
+            padding-bottom: 10px;
+        }
+
+        /* Girdi Paneli */
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 15px 0 10px 0;
+            color: #334155;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+            background: var(--bg-main);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: var(--accent-blue);
+        }
+
+        .val-badge {
+            background: #fff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--accent-blue);
+            min-width: 75px;
+            text-align: center;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-outline {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-main);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Görselleştirici Paneli */
+        .sim-container {
+            flex-grow: 1;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            min-height: 400px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Çıktı Paneli */
+        .gauge-container {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: var(--bg-main);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .gauge-value {
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--accent-green);
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .gauge-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #fff;
+            padding: 15px 10px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .stat-card .val {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .stat-card .lbl {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            background: var(--bg-main);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .summary-table th,
+        .summary-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .summary-table th {
+            text-align: left;
+            color: var(--text-muted);
+            font-weight: 600;
+            width: 60%;
+        }
+
+        .summary-table td {
+            text-align: right;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .summary-table tr:last-child th,
+        .summary-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Grafikler ve Optimizasyon */
+        .graph-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .graph-wrap {
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .graph-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .opt-summary-bar {
+            background: var(--bg-main);
+            border: 1px dashed var(--accent-green);
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-family: monospace;
+            font-size: 13px;
+            color: var(--text-main);
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        /* --- INFO TOOLTIP SİSTEMİ --- */
+        .info-icon {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: var(--accent-blue);
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: help;
+            margin-left: 6px;
+            position: relative;
+            z-index: 20;
+        }
+
+        .info-icon:hover {
+            background-color: #1e3a8a;
+        }
+
+        .info-tooltip {
+            visibility: hidden;
+            opacity: 0;
+            width: 280px;
+            background-color: #0f172a;
+            color: #f8fafc;
+            text-align: left;
+            border-radius: 8px;
+            padding: 12px;
+            position: absolute;
+            z-index: 100;
+            bottom: 130%;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: all 0.2s;
+            font-size: 12px;
+            font-weight: normal;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            line-height: 1.4;
+            text-transform: none;
+        }
+
+        .info-tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -6px;
+            border-width: 6px;
+            border-style: solid;
+            border-color: #0f172a transparent transparent transparent;
+        }
+
+        .info-icon:hover .info-tooltip {
+            visibility: visible;
+            opacity: 1;
+            bottom: 140%;
+        }
+
+        .info-tooltip .formula {
+            display: block;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: #bae6fd;
+        }
+
+        .info-tooltip .pro-title {
+            display: block;
+            font-weight: bold;
+            color: #94a3b8;
+            font-size: 10px;
+            margin-top: 8px;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+        }
+
+        /* ── Paylaşılan Gaz Seçici ── */
+        .global-gas-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .global-gas-bar .gas-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .gas-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border-color);
+            background: var(--bg-main);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: .2s;
+            white-space: nowrap;
+            line-height: 1.3;
+            text-align: center;
+        }
+
+        .gas-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .gas-btn.active {
+            border-color: var(--accent-blue);
+            background: #eff6ff;
+            color: var(--accent-blue);
+        }
+
+        .gas-info-bar {
+            font-size: 11px;
+            color: var(--text-muted);
+            padding: 4px 10px;
+            background: var(--bg-main);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-left: auto;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <span>🚀⚡</span>
+        <h1>EHD İyonik İtici Simülasyon Laboratuvarı</h1>
+    </div>
+
+    <div class="mode-selector">
+        <button id="btn-mode-lin" class="mode-btn active" onclick="setMode('lin')">1. Çok Kademeli Çizgisel Lifter
+        </button>
+        <button id="btn-mode-cyl" class="mode-btn" onclick="setMode('cyl')">2. Silindirik Taç-Disk İtici (Sivri
+            Uçlu)</button>
+        <button id="btn-mode-zep" class="mode-btn" onclick="setMode('zep')">3. 🛸 EHD Zeplin Uçuş Simülasyonu</button>
+    </div>
+
+
+    <!-- ══ PAYLAŞILAN GAZ SEÇİCİ ══ -->
+    <div class="global-gas-bar">
+        <span class="gas-label">🧪 Ortam Gazı:</span>
+        <button class="gas-btn active" id="gbtn-air" onclick="setGas('air')">🌫️ Hava</button>
+        <button class="gas-btn" id="gbtn-n2" onclick="setGas('n2')">🔵 N₂</button>
+        <button class="gas-btn" id="gbtn-co2" onclick="setGas('co2')">🟤 CO₂</button>
+        <button class="gas-btn" id="gbtn-sf6" onclick="setGas('sf6')">🟣 SF₆</button>
+        <button class="gas-btn" id="gbtn-he" onclick="setGas('he')">🟡 He</button>
+        <button class="gas-btn" id="gbtn-ar" onclick="setGas('ar')">⚪ Ar</button>
+        <span class="gas-info-bar" id="gasInfoBar">ρ=1.204 kg/m³ · μ=1.50×10⁻⁴ m²/Vs · Vbr×1.00</span>
+    </div>
+
+    <div id="wrapper-lin" style="display:block;">
+        <div class="tabs">
+            <button id="l_tab_sim" class="tab active" onclick="l_sw('sim')">🚀 Canlı Simülasyon</button>
+            <button id="l_tab_opt" class="tab" onclick="l_sw('opt')">⚡ Optimum Kademe Analizi</button>
+            <button id="l_tab_graph" class="tab" onclick="l_sw('graph')">📈 Verimlilik Grafikleri</button>
+        </div>
+
+        <div id="l_v-sim" class="view-panel active">
+            <div class="dashboard">
+                <div class="panel" style="overflow-y: auto;">
+                    <div class="panel-title"><span>⚙️ Ayarlar</span><span>(Girdiler)</span></div>
+                    <div class="section-title">Ana Güç Kaynağı</div>
+                    <div class="control-group">
+                        <div class="control-label">
+                            <div style="display:flex; align-items:center;">
+                                <span>⚡ Voltaj (V)</span>
+                                <span class="info-icon">?<span class="info-tooltip"><strong>Nasıl Çalışır?</strong>
+                                        Sisteme verilen elektriksel itme gücüdür. Voltaj arttıkça iyonların hızı ve itki
+                                        kuvveti artar, ancak havanın direncini kırıp şimşek (ark) oluşturma ihtimali de
+                                        yükselir.<br><span class="pro-title">PROFESYONEL BİLGİ</span>Elektrik alanı (E),
+                                        voltajın (V) mesafeye (d) bölümüdür. İyon akımı bu elektrik alanının karesiyle
+                                        orantılıdır.<span class="formula">E = V / d<br>I &prop; &epsilon;&#8320;
+                                            &middot; &mu; &middot; E&sup2;</span></span></span>
+                            </div>
+                            <span class="val-badge" id="l_vv">30,000 V</span>
+                        </div>
+                        <input type="range" min="5000" max="40000" step="500" value="30000" id="l_rv" oninput="l_upd()">
+                    </div>
+                    <div class="section-title">Lifter Geometrisi</div>
+                    <div class="control-group">
+                        <div class="control-label">
+                            <div style="display:flex; align-items:center;">
+                                <span>📏 Kademe 1 Aralığı (d)</span>
+                                <span class="info-icon">?<span class="info-tooltip"><strong>Nasıl Çalışır?</strong> İnce
+                                        tel (+) ile alüminyum folyo (-) arasındaki mesafedir. Mesafeyi daraltmak
+                                        elektrik alanını güçlendirir ve itkiyi artırır, fakat mesafe çok daralırsa
+                                        elektrik havayı yararak kısa devre (ark) yapar.<br><span
+                                            class="pro-title">PROFESYONEL BİLGİ</span>Havanın yalıtkanlığını kaybetme
+                                        sınırı Paschen Kanunu ile hesaplanır.<span class="formula">V_br = (B &middot; p
+                                            &middot; d) / (ln(A &middot; p &middot; d) - ln(ln(1 +
+                                            1/&gamma;)))</span></span></span>
+                            </div>
+                            <span class="val-badge" id="l_vd0">38 mm</span>
+                        </div>
+                        <input type="range" min="5" max="80" step="1" value="38" id="l_rd0" oninput="l_upd()">
+                    </div>
+                    <div class="section-title">Çoklu Kademe Kontrolü</div>
+                    <div class="btn-group">
+                        <button class="btn btn-outline" onclick="l_addS()" id="l_btnA">➕ Kademe Ekle</button>
+                        <button class="btn btn-outline" onclick="l_remS()" id="l_btnR">➖ Kademe Çıkar</button>
+                    </div>
+                    <div id="l_extra-stages"></div>
+                    <div style="margin-top: auto; padding-top: 15px;">
+                        <button class="btn btn-primary" id="l_btnT" onclick="l_tog()"
+                            style="width: 100%; padding: 12px;">⏸ Simülasyonu Duraklat</button>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><span>👁️ Canlı Gözlem Alanı</span></div>
+                    <div id="l_sim-container" class="sim-container">
+                        <div class="status-badge" id="l_wbar">Durum Hesaplanıyor...</div>
+                        <canvas id="l_simC"></canvas>
+                    </div>
+                </div>
+                <div class="panel" style="overflow-y: auto;">
+                    <div class="panel-title"><span>📊 Performans Panosu</span><span>(Sonuçlar)</span></div>
+                    <div class="gauge-container">
+                        <div class="gauge-value" id="l_meff">--%</div>
+                        <div class="gauge-label">Toplam İyonizasyon Verimi<span class="info-icon">?<span
+                                    class="info-tooltip"><strong>Nasıl Çalışır?</strong> Sisteme verdiğiniz elektrik
+                                    enerjisinin yüzde kaçının havayı itmek için dönüştüğünü gösterir. Ark oluşursa
+                                    enerji ziyan olur.<br><span class="pro-title">PROFESYONEL BİLGİ</span>Net Verim
+                                    (&eta;), uygulanan voltajın iyonizasyon eşiğini ne kadar aştığına ve Paschen kırılma
+                                    voltajına yakınlığına bağlıdır.<span class="formula">&eta;_net = E_ion &middot; (1 -
+                                        Ark_Risk &middot; 0.9)</span></span></span></div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="val" id="l_ml2">--</div>
+                            <div class="lbl">Toplam İtki (mN)<span class="info-icon">?<span
+                                        class="info-tooltip"><strong>Nasıl Çalışır?</strong> Lifter'ın ürettiği yukarı
+                                        yönlü kaldırma kuvvetidir.<br><span class="pro-title">PROFESYONEL
+                                            BİLGİ</span>Newton'un Momentum transferi:<span class="formula">F = &rho;
+                                            &middot; A &middot; (v_out&sup2; - v_in&sup2;)</span></span></span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="val" id="l_mw">--</div>
+                            <div class="lbl">Hava Hızı (m/s)</div>
+                        </div>
+                        <div class="stat-card" id="l_card-arc">
+                            <div class="val" id="l_ma">--</div>
+                            <div class="lbl">Ark Riski (%)<span class="info-icon"
+                                    style="right:0; left:auto; transform:none;">?<span
+                                        class="info-tooltip"><strong>Nasıl Çalışır?</strong> Elektriğin şimşek gibi
+                                        havayı yarıp atlama ihtimalidir.<br><span class="pro-title">PROFESYONEL
+                                            BİLGİ</span>Uygulanan voltajın, Paschen sınır voltajına oranı.<span
+                                            class="formula">Ark_Risk = (V / V_br - 0.55) / 0.45</span></span></span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="val" id="l_mkad">--</div>
+                            <div class="lbl">Aktif Kademe</div>
+                        </div>
+                    </div>
+                    <table class="summary-table">
+                        <tr>
+                            <th>Kullanılan Voltaj</th>
+                            <td id="l_t-v">--</td>
+                        </tr>
+                        <tr>
+                            <th>Üretilen Kaldırma Kuvveti</th>
+                            <td id="l_t-f">--</td>
+                        </tr>
+                        <tr>
+                            <th>Nihai Rüzgar Hızı</th>
+                            <td id="l_t-s">--</td>
+                        </tr>
+                        <tr>
+                            <th>En Yüksek Ark Riski</th>
+                            <td id="l_t-r">--</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="l_v-opt" class="view-panel">
+            <div class="panel" style="height: calc(100vh - 240px); min-height: 650px; overflow-y: auto;">
+                <div class="panel-title"><span>⚡ Çoklu Kademe Optimizasyonu</span><span></span></div>
+                <div style="display:flex; gap: 20px; align-items:flex-end;">
+                    <div class="control-group" style="flex:1; margin-bottom:0;">
+                        <div class="control-label"><span>⚡ Test Voltajı (V)</span><span class="val-badge"
+                                id="l_ovv">30,000 V</span></div>
+                        <input type="range" min="5000" max="40000" step="500" value="30000" id="l_rov"
+                            oninput="l_drawOpt()">
+                    </div>
+                    <div class="control-group" style="flex:1; margin-bottom:0;">
+                        <div class="control-label"><span>📏 Sabit Tel Aralığı (d)</span><span class="val-badge"
+                                id="l_odd">38 mm</span></div>
+                        <input type="range" min="10" max="70" step="1" value="38" id="l_rod" oninput="l_drawOpt()">
+                    </div>
+                </div>
+                <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-top: 20px;">
+                    <div class="stat-card" style="border: 2px solid var(--accent-green);">
+                        <div class="val" id="l_opt-k" style="color: var(--accent-green);">--</div>
+                        <div class="lbl">Önerilen Optimum Kademe<span class="info-icon">?<span
+                                    class="info-tooltip">Algoritma, yeni eklenen bir kademenin toplam itkiye katkısının
+                                    (marjinal kazanım) %5'in altına düştüğü noktayı tespit ederek optimum sınırı
+                                    belirler.</span></span></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="val" id="l_opt-v">--</div>
+                        <div class="lbl">Hız (m/s)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="val" id="l_opt-l">--</div>
+                        <div class="lbl">Kaldırma (mN)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="val" id="l_opt-eff">--</div>
+                        <div class="lbl">Verimlilik Düşüşü<span class="info-icon"
+                                style="right:0; left:auto; transform:none;">?<span class="info-tooltip">Her yeni kat
+                                    eklediğinizde, iyonların havayı yakalayıp itme yeteneği azalır. Bu değer, kat başına
+                                    verimlilik kaybını verir.</span></span></div>
+                    </div>
+                </div>
+                <div class="graph-wrap" style="flex-grow: 1; display:flex; flex-direction: column;">
+                    <div class="graph-title">📈 Kaldırma Kuvveti (Yeşil) ve Verimlilik (Turuncu) / Kademe Sayısı
+                        İlişkisi</div>
+                    <div style="flex-grow: 1; position: relative;"><canvas id="l_optC"
+                            style="position:absolute; width:100%; height:100%;"></canvas></div>
+                </div>
+                <div class="opt-summary-bar" id="l_opt-frow">—</div>
+            </div>
+        </div>
+
+        <div id="l_v-graph" class="view-panel">
+            <div class="panel" style="height: calc(100vh - 240px); min-height: 650px; overflow-y: auto;">
+                <div class="panel-title"><span>📈 Sistem Davranışı Grafikleri</span><span>(Trendler)</span></div>
+                <div class="control-group" style="max-width: 400px; margin: 0 auto 20px auto;">
+                    <div class="control-label"><span>⚡ Test Voltajı (V)</span><span class="val-badge" id="l_gvv">30,000
+                            V</span></div>
+                    <input type="range" min="5000" max="40000" step="500" value="30000" id="l_grv"
+                        oninput="l_drawGraphs()">
+                </div>
+                <div class="graph-grid">
+                    <div class="graph-wrap">
+                        <div class="graph-title">1. Verimlilik ve Ark Riski Kesişimi<span class="info-icon">?<span
+                                    class="info-tooltip">Yeşil çizgi verimliliği, Kırmızı kesikli çizgi patlama riskini
+                                    gösterir. Kesişimden önceki en yüksek yeşil nokta, ideal mesafedir.</span></span>
+                        </div>
+                        <div style="height: 180px;"><canvas id="l_gC1"></canvas></div>
+                    </div>
+                    <div class="graph-wrap">
+                        <div class="graph-title">2. Kademe Sayısına Göre İtki Gücü<span class="info-icon">?<span
+                                    class="info-tooltip">Farklı kademe sayılarının (k=1,2,3) itkiyi nasıl artırdığını
+                                    gösterir.</span></span></div>
+                        <div style="height: 180px;"><canvas id="l_gC2"></canvas></div>
+                    </div>
+                </div>
+                <div class="graph-wrap" style="max-width: 800px; margin: 0 auto;">
+                    <div class="graph-title">3. Kademe (k) Artışının Getiri Eğrisi<span class="info-icon">?<span
+                                class="info-tooltip">Marjinal Getirinin Azalması prensibi. 5. kademeden sonra eklenen
+                                katmanlar çok az fayda sağlar.</span></span></div>
+                    <div style="height: 200px;"><canvas id="l_gC3"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="wrapper-cyl" style="display:none;">
+        <div class="tabs">
+            <button id="c_tab_sim" class="tab active" onclick="c_sw('sim')">🚀 Canlı Simülasyon</button>
+            <button id="c_tab_opt" class="tab" onclick="c_sw('opt')">🎯 Optimum Parametre Analizi</button>
+            <button id="c_tab_graph" class="tab" onclick="c_sw('graph')">📈 Verimlilik Grafikleri</button>
+        </div>
+
+        <div id="c_v-sim" class="view-panel active">
+            <div class="dashboard">
+                <div class="panel" style="overflow-y: auto;">
+                    <div class="panel-title"><span>⚙️ Geometri ve Güç</span><span>(Girdiler)</span></div>
+                    <div class="control-group">
+                        <div class="control-label">
+                            <div style="display:flex; align-items:center;">
+                                <span>⚡ Voltaj (V)</span>
+                                <span class="info-icon">?<span class="info-tooltip"><strong>Nasıl Çalışır?</strong> İğne
+                                        uçlarına verilen yüksek gerilim. Voltaj arttıkça iyon fırlatma gücü artar ancak
+                                        iğne ucunda plazma/ark riski yükselir.<br><span class="pro-title">PROFESYONEL
+                                            BİLGİ</span>Mott-Gurney akımı elektrik alanının (E) karesiyle
+                                        orantılıdır.<span class="formula">E = V / d<br>I &prop;
+                                            E&sup2;</span></span></span>
+                            </div>
+                            <span class="val-badge" id="c_vv">25,000 V</span>
+                        </div>
+                        <input type="range" min="5000" max="40000" step="500" value="25000" id="c_rv" oninput="c_upd()">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label">
+                            <div style="display:flex; align-items:center;">
+                                <span>📏 Emiter-Disk Aralığı (d)</span>
+                                <span class="info-icon">?<span class="info-tooltip"><strong>Nasıl Çalışır?</strong>
+                                        İğneli taç (+) ile karşıdaki toplayıcı disk (-) arasındaki boşluk.<br><span
+                                            class="pro-title">PROFESYONEL BİLGİ</span>Mesafe kısaldıkça alan şiddetlenir
+                                        ancak Paschen kırılma voltajı eşiği düşer (kısa devre riski).</span></span>
+                            </div>
+                            <span class="val-badge" id="c_vd">18 mm</span>
+                        </div>
+                        <input type="range" min="5" max="50" step="1" value="18" id="c_rd" oninput="c_upd()">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label">
+                            <div style="display:flex; align-items:center;">
+                                <span>👑 Taç Diş Sayısı (n)</span>
+                                <span class="info-icon">?<span class="info-tooltip"><strong>Nasıl Çalışır?</strong>
+                                        Emiter üzerindeki iğne/diş sayısı. Sayı arttıkça daha çok noktadan iyon
+                                        fırlatılır.<br><span class="pro-title">PROFESYONEL BİLGİ</span>Fill factor
+                                        (doldurma oranı), maksimum satürasyon diş sayısına (n_sat) göre efektif alanı
+                                        (A_eff) sınırlar.</span></span>
+                            </div>
+                            <span class="val-badge" id="c_vn">6</span>
+                        </div>
+                        <input type="range" min="3" max="12" step="1" value="6" id="c_rn" oninput="c_upd()">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label">
+                            <div style="display:flex; align-items:center;">
+                                <span>⭕ Silindir Çapı (dia)</span>
+                                <span class="info-icon">?<span class="info-tooltip">Havanın içinden geçtiği tünelin
+                                        çapı. Çap büyüdükçe daha fazla hava kütlesi itilebilir.</span></span>
+                            </div>
+                            <span class="val-badge" id="c_vdia">40 mm</span>
+                        </div>
+                        <input type="range" min="20" max="80" step="2" value="40" id="c_rdia" oninput="c_upd()">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label">
+                            <div style="display:flex; align-items:center;">
+                                <span>📐 Diş Uzunluğu (l)</span>
+                                <span class="info-icon">?<span class="info-tooltip">Sivri uçların uzunluğu. Uçlar ne
+                                        kadar belirginse, elektrik alanı o noktada o kadar çok odaklanır.</span></span>
+                            </div>
+                            <span class="val-badge" id="c_vl">10 mm</span>
+                        </div>
+                        <input type="range" min="4" max="25" step="1" value="10" id="c_rl" oninput="c_upd()">
+                    </div>
+                    <div style="margin-top: auto;">
+                        <button class="btn btn-primary" id="c_btnT" onclick="c_tog()"
+                            style="width: 100%; padding: 12px;">⏸ Simülasyonu Duraklat</button>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><span>👁️ Eksenel Kesit Gözlem Alanı</span></div>
+                    <div id="c_sim-container" class="sim-container">
+                        <div class="status-badge" id="c_wbar">Durum Hesaplanıyor...</div>
+                        <canvas id="c_simC"></canvas>
+                    </div>
+                </div>
+                <div class="panel" style="overflow-y: auto;">
+                    <div class="panel-title"><span>📊 Performans Panosu</span><span>(Sonuçlar)</span></div>
+                    <div class="gauge-container">
+                        <div class="gauge-value" id="c_meff">--%</div>
+                        <div class="gauge-label">Net İyonizasyon Verimi<span class="info-icon">?<span
+                                    class="info-tooltip">Elektriğin ark (kıvılcım) olmadan iyon rüzgarına dönüşme
+                                    oranı.</span></span></div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="val" id="c_mT">--</div>
+                            <div class="lbl">EHD Thrust (mN)<span class="info-icon">?<span class="info-tooltip">Üretilen
+                                        toplam itki kuvveti (Kaldırma).<span class="pro-title">PROFESYONEL
+                                            BİLGİ</span>Castillo/Jewell-Larsen formülasyonu:<span class="formula">F = (I
+                                            &middot; d) / &mu;</span></span></span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="val" id="c_mV">--</div>
+                            <div class="lbl">Çıkış Hızı (m/s)</div>
+                        </div>
+                        <div class="stat-card" id="c_card-arc">
+                            <div class="val" id="c_mArc">--</div>
+                            <div class="lbl">Ark Riski (%)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="val" id="c_mP">--</div>
+                            <div class="lbl">Tüketilen Güç (W)<span class="info-icon"
+                                    style="right:0; left:auto; transform:none;">?<span class="info-tooltip">Sistemin
+                                        prizden/pilden çektiği elektriksel güç (Voltaj x Akım).</span></span></div>
+                        </div>
+                    </div>
+                    <table class="summary-table">
+                        <tr>
+                            <th>Kullanılan Voltaj</th>
+                            <td id="c_t-v">--</td>
+                        </tr>
+                        <tr>
+                            <th>Güç Başına İtki (T/P)</th>
+                            <td id="c_t-tp">--</td>
+                        </tr>
+                        <tr>
+                            <th>Paschen Kırılma Eşiği</th>
+                            <td id="c_t-vbr">--</td>
+                        </tr>
+                        <tr>
+                            <th>Aktif Diş Sayısı</th>
+                            <td id="c_t-n">--</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="c_v-opt" class="view-panel">
+            <div class="panel" style="height: calc(100vh - 240px); min-height: 650px; overflow-y: auto;">
+                <div class="panel-title"><span>🎯 Geometrik Optimizasyon Analizi</span><span>(En İyi
+                        Parametreler)</span></div>
+                <div style="display:flex; gap: 20px; align-items:flex-end;">
+                    <div class="control-group" style="flex:1; margin-bottom:0;">
+                        <div class="control-label"><span>⚡ Test Voltajı (V)</span><span class="val-badge"
+                                id="c_ovv">25,000 V</span></div>
+                        <input type="range" min="5000" max="40000" step="500" value="25000" id="c_rov"
+                            oninput="c_drawOpt()">
+                    </div>
+                    <div class="control-group" style="flex:1; margin-bottom:0;">
+                        <div class="control-label"><span>⭕ Silindir Çapı (mm)</span><span class="val-badge"
+                                id="c_ovdia">40 mm</span></div>
+                        <input type="range" min="20" max="80" step="2" value="40" id="c_rodia" oninput="c_drawOpt()">
+                    </div>
+                </div>
+                <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 20px;">
+                    <div class="stat-card" style="border: 1px solid var(--accent-blue);">
+                        <div class="val" id="c_opt-d" style="color: var(--accent-blue);">--</div>
+                        <div class="lbl">İdeal Aralık (d)</div>
+                    </div>
+                    <div class="stat-card" style="border: 1px solid var(--accent-blue);">
+                        <div class="val" id="c_opt-n" style="color: var(--accent-blue);">--</div>
+                        <div class="lbl">İdeal Diş Sayısı (n)</div>
+                    </div>
+                    <div class="stat-card" style="border: 1px solid var(--accent-blue);">
+                        <div class="val" id="c_opt-l" style="color: var(--accent-blue);">--</div>
+                        <div class="lbl">İdeal Diş Uzunluğu (l)</div>
+                    </div>
+                    <div class="stat-card" style="border: 2px solid var(--accent-green); background:#f0fdf4;">
+                        <div class="val" id="c_opt-T" style="color: var(--accent-green);">--</div>
+                        <div class="lbl">Maksimum Thrust (mN)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="val" id="c_opt-v">--</div>
+                        <div class="lbl">Maksimum Hız (m/s)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="val" id="c_opt-tp">--</div>
+                        <div class="lbl">T/P Verimliliği (mN/W)<span class="info-icon"
+                                style="right:0; left:auto; transform:none;">?<span class="info-tooltip">Harcanan her 1
+                                    Watt güç karşılığında kaç milinewton (mN) itki elde edildiğini gösterir. Havacılık
+                                    uygulamaları için en kritik metrik budur.</span></span></div>
+                    </div>
+                </div>
+                <div class="opt-summary-bar" id="c_opt-frow">—</div>
+                <div class="graph-grid">
+                    <div class="graph-wrap" style="margin-bottom: 0;">
+                        <div class="graph-title">📈 Thrust & Hız / Emiter-Disk Aralığı (d) Eğrisi</div>
+                        <div style="height: 180px;"><canvas id="c_optC1"></canvas></div>
+                    </div>
+                    <div class="graph-wrap" style="margin-bottom: 0;">
+                        <div class="graph-title">📈 Thrust / Diş Sayısı (n) Eğrisi (Doygunluk Analizi)</div>
+                        <div style="height: 180px;"><canvas id="c_optC2"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="c_v-graph" class="view-panel">
+            <div class="panel" style="height: calc(100vh - 240px); min-height: 650px; overflow-y: auto;">
+                <div class="panel-title"><span>📈 Sistem Davranışı Grafikleri</span><span>(Trendler)</span></div>
+                <div class="control-group" style="max-width: 400px; margin: 0 auto 20px auto;">
+                    <div class="control-label"><span>⚡ Test Voltajı (V)</span><span class="val-badge" id="c_gvv">25,000
+                            V</span></div>
+                    <input type="range" min="5000" max="40000" step="500" value="25000" id="c_grv"
+                        oninput="c_drawGraphs()">
+                </div>
+                <div class="graph-grid">
+                    <div class="graph-wrap">
+                        <div class="graph-title">1. Voltaj Değişiminin İtkiye (Thrust) Etkisi<span
+                                class="info-icon">?<span class="info-tooltip">Farklı mesafeler (d) için voltaj arttıkça
+                                    itkinin karesel (parabolik) olarak nasıl fırladığını gösterir.</span></span></div>
+                        <div style="height: 180px;"><canvas id="c_gC1"></canvas></div>
+                    </div>
+                    <div class="graph-wrap">
+                        <div class="graph-title">2. Mesafe (d) Karşısında İtki & Ark Riski<span class="info-icon">?<span
+                                    class="info-tooltip">Mesafe (X ekseni) kısaldıkça İtki (Yeşil) artar, ancak Ark
+                                    Riski (Kırmızı) de %100'e yaklaşır. İkisinin dengede olduğu nokta
+                                    optimumdur.</span></span></div>
+                        <div style="height: 180px;"><canvas id="c_gC2"></canvas></div>
+                    </div>
+                </div>
+                <div class="graph-wrap" style="max-width: 800px; margin: 0 auto;">
+                    <div class="graph-title">3. Güç Verimliliği (T/P) - Farklı Diş Sayıları (n)<span
+                            class="info-icon">?<span class="info-tooltip">Watt başına üretilen itki miktarını gösterir.
+                                Belirli bir mesafe sonrasında veya çok fazla diş sayısının (n=12) verimliliği nasıl
+                                bozabileceğini analiz eder.</span></span></div>
+                    <div style="height: 200px;"><canvas id="c_gC3"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="wrapper-zep" style="display:none;">
+        <div class="tabs">
+            <button class="tab active">🛸 Canlı Uçuş Simülasyonu</button>
+        </div>
+        <div class="dashboard">
+            <!-- SOL PANEL: Kontroller -->
+            <div class="panel" style="overflow-y: auto;">
+                <div class="panel-title"><span>⚙️ Uçuş Parametreleri</span><span>(Girdiler)</span></div>
+                <div class="section-title">EHD İtki Sistemi</div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <div style="display:flex; align-items:center;">
+                            <span>⚡ EHD İtki Kuvveti</span>
+                            <span class="info-icon">?<span class="info-tooltip"><strong>Nasıl Çalışır?</strong> İyon
+                                    motoru tarafından üretilen itme kuvvetidir. Bu değer voltaj ve geometri ayarlarından
+                                    elde edilir.<span class="formula">F_thrust = f(V, d, n)</span></span></span>
+                        </div>
+                        <span class="val-badge" id="z_vT">100 mN</span>
+                    </div>
+                    <input type="range" min="1" max="500" step="1" value="100" id="z_rT" oninput="z_upd()">
+                </div>
+                <div class="section-title">Zeplin Özellikleri</div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <div style="display:flex; align-items:center;">
+                            <span>⚖️ Araç Kütlesi</span>
+                            <span class="info-icon">?<span class="info-tooltip">Zeplinin toplam kütlesi (gövde + sistem
+                                    + yük). Kütle arttıkça aynı itki ile daha düşük ivme elde edilir.<span
+                                        class="formula">a = F_net / m</span></span></span>
+                        </div>
+                        <span class="val-badge" id="z_vM">200 g</span>
+                    </div>
+                    <input type="range" min="10" max="1000" step="10" value="200" id="z_rM" oninput="z_upd()">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <div style="display:flex; align-items:center;">
+                            <span>💨 Aerodinamik Sürükleme (Cd)</span>
+                            <span class="info-icon">?<span class="info-tooltip">Hava direnci katsayısı. Zeplinin şekline
+                                    bağlıdır. Düşük Cd = daha aerodinamik tasarım.<span class="formula">F_drag = ½ · ρ ·
+                                        v² · Cd · A</span></span></span>
+                        </div>
+                        <span class="val-badge" id="z_vC">0.50</span>
+                    </div>
+                    <input type="range" min="10" max="120" step="1" value="50" id="z_rC" oninput="z_upd()">
+                </div>
+                <div style="margin-top: auto; padding-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+                    <button class="btn btn-primary" id="z_btnT" onclick="z_tog()"
+                        style="width: 100%; padding: 12px; background: var(--accent-blue);">▶️ Başlat</button>
+                    <button class="btn btn-outline" onclick="z_reset()" style="width: 100%; padding: 10px;">🔄
+                        Sıfırla</button>
+                </div>
+            </div>
+
+            <!-- ORTA PANEL: Simülasyon -->
+            <div class="panel">
+                <div class="panel-title"><span>🛸 Canlı Uçuş Gözlem Alanı</span></div>
+                <div id="z_sim-container" class="sim-container" style="background: #bfdbfe;">
+                    <canvas id="z_simC"></canvas>
+                </div>
+            </div>
+
+            <!-- SAĞ PANEL: Sonuçlar -->
+            <div class="panel" style="overflow-y: auto;">
+                <div class="panel-title"><span>📊 Uçuş Performans Panosu</span><span>(Sonuçlar)</span></div>
+                <div class="gauge-container">
+                    <div class="gauge-value" style="color: var(--accent-blue);" id="z_out_v">0.00</div>
+                    <div class="gauge-label">Anlık Hız (m/s)</div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="val" id="z_out_a">0.000</div>
+                        <div class="lbl">İvme (m/s²)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="val" id="z_val_dist">0.00</div>
+                        <div class="lbl">Mesafe (m)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="val" id="z_val_drag">0.0000</div>
+                        <div class="lbl">Hava Direnci (N)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="val" id="z_val_fnet">0.0000</div>
+                        <div class="lbl">Net Kuvvet (N)</div>
+                    </div>
+                </div>
+                <table class="summary-table">
+                    <tr>
+                        <th>Uygulanan İtki</th>
+                        <td id="z_t-thrust">--</td>
+                    </tr>
+                    <tr>
+                        <th>Araç Kütlesi</th>
+                        <td id="z_t-mass">--</td>
+                    </tr>
+                    <tr>
+                        <th>Sürükleme Katsayısı (Cd)</th>
+                        <td id="z_t-cd">--</td>
+                    </tr>
+                    <tr>
+                        <th>Ortam Gazı (ρ)</th>
+                        <td id="z_t-gas">Hava — 1.204 kg/m³</td>
+                    </tr>
+                    <tr>
+                        <th>Ön Kesit Alanı (A)</th>
+                        <td>0.025 m²</td>
+                    </tr>
+                </table>
+                <div class="opt-summary-bar" style="margin-top: 15px; font-size: 12px;">
+                    💡 <strong>Newton 2. Kanunu:</strong> F_net = F_itki − F_sürükleme<br>
+                    a = F_net / m &nbsp;|&nbsp; v += a·dt &nbsp;|&nbsp; x += v·dt
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ==========================================================================
+           ORTAK FİZİK VE MATEMATİK MOTORU (Orijinal Kod - DOKUNULMADI)
+           ========================================================================== */
+        /* ══ GAZ VERİTABANI ══════════════════════════════════════════════════
+           Kaynaklar: Kuffel & Zaengl "High Voltage Engineering" (2000)
+                      Lieberman & Lichtenberg "Principles of Plasma Discharges" (2005)
+                      Jewell-Larsen et al. IEEE Trans. Plasma Sci. 2008
+        
+           rho  : yoğunluk [kg/m³] @ 20°C, 1 atm
+           mu   : iyon mobilitesi [m²/(V·s)] — EHD thruster literatürü
+           vbr  : Paschen V_br çarpanı (havaya göre normalize)
+           hue  : iyon rengi (HSL hue)
+           ══════════════════════════════════════════════════════════════════ */
+        const GASES = {
+            air: { name: 'Hava', rho: 1.204, mu: 1.5e-4, vbr: 1.00, hue: 210, info: 'ρ=1.204 kg/m³ · μ=1.50×10⁻⁴ m²/Vs · Vbr×1.00' },
+            n2: { name: 'Azot (N₂)', rho: 1.165, mu: 1.6e-4, vbr: 1.05, hue: 220, info: 'ρ=1.165 kg/m³ · μ=1.60×10⁻⁴ m²/Vs · Vbr×1.05' },
+            co2: { name: 'CO₂', rho: 1.842, mu: 1.1e-4, vbr: 0.88, hue: 30, info: 'ρ=1.842 kg/m³ · μ=1.10×10⁻⁴ m²/Vs · Vbr×0.88' },
+            sf6: { name: 'SF₆', rho: 6.164, mu: 0.55e-4, vbr: 2.50, hue: 280, info: 'ρ=6.164 kg/m³ · μ=0.55×10⁻⁴ m²/Vs · Vbr×2.50' },
+            he: { name: 'Helyum', rho: 0.164, mu: 6.5e-4, vbr: 0.14, hue: 50, info: 'ρ=0.164 kg/m³ · μ=6.50×10⁻⁴ m²/Vs · Vbr×0.14' },
+            ar: { name: 'Argon', rho: 1.634, mu: 1.7e-4, vbr: 0.92, hue: 160, info: 'ρ=1.634 kg/m³ · μ=1.70×10⁻⁴ m²/Vs · Vbr×0.92' },
+        };
+        let currentGas = 'air';
+
+        function gasRHO() { return GASES[currentGas].rho; }
+        function gasMU() { return GASES[currentGas].mu; }
+        function gasVBR() { return GASES[currentGas].vbr; }
+        function gasHUE() { return GASES[currentGas].hue; }
+
+        function setGas(key) {
+            currentGas = key;
+            const g = GASES[key];
+            document.querySelectorAll('.gas-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById('gbtn-' + key);
+            if (btn) btn.classList.add('active');
+            const bar = document.getElementById('gasInfoBar');
+            if (bar) bar.textContent = g.info;
+            // Üç sistemi de güncelle
+            l_rebuildIons(); l_upd();
+            c_rebuildIons(); c_upd();
+            z_upd();
+            // Aktif sekmelerin grafiklerini yenile
+            const mode = currentMode;
+            if (mode === 'lin') { l_drawOpt(); l_drawGraphs(); }
+            if (mode === 'cyl') { c_drawOpt(); c_drawGraphs(); }
+        }
+
+        const EPS0 = 8.85e-12, F_GEO = 3.8;
+        // MU ve RHO artık gasRHO() ve gasMU() — geriye dönük alias:
+        const MU_ALIAS = 1.5e-4, RHO_ALIAS = 1.2;
+
+        // Ortak Paschen Kanunu
+        function paschenVbr(d_mm) {
+            // Hava baz voltajı × gazın Paschen çarpanı
+            const pd = 101325 * d_mm / 1000;
+            const ln = Math.log(11.25 * pd) - Math.log(Math.log(1 + 1 / 0.01));
+            const vbr_air = ln > 0 ? (273.75 * pd / ln) * 0.60 : Infinity;
+            return vbr_air * gasVBR();
+        }
+
+        let currentMode = 'lin';
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('btn-mode-lin').classList.toggle('active', mode === 'lin');
+            document.getElementById('btn-mode-cyl').classList.toggle('active', mode === 'cyl');
+            document.getElementById('btn-mode-zep').classList.toggle('active', mode === 'zep');
+            document.getElementById('wrapper-lin').style.display = (mode === 'lin') ? 'block' : 'none';
+            document.getElementById('wrapper-cyl').style.display = (mode === 'cyl') ? 'block' : 'none';
+            document.getElementById('wrapper-zep').style.display = (mode === 'zep') ? 'block' : 'none';
+            if (mode === 'lin') { l_rsz(); l_drawOpt(); l_drawGraphs(); }
+            if (mode === 'cyl') { c_rsz(); c_drawOpt(); c_drawGraphs(); }
+            if (mode === 'zep') { setTimeout(() => { z_rsz(); z_upd(); }, 100); }
+        }
+
+        /* ==========================================================================
+           MODÜL 1: ÇİZGİSEL ÇOK KADEMELİ LİFTER (LINEAR)
+           ========================================================================== */
+        const l_A_EFF = 0.03;
+
+        function l_calcI(v, d_mm) { const d = d_mm / 1000, E = v / d; return F_GEO * EPS0 * gasMU() * E * E * l_A_EFF; }
+        function l_stagePhys(v, d_mm) {
+            const Vbr = paschenVbr(d_mm);
+            const arcR = Math.min(1, Math.max(0, (v / Vbr - 0.55) / 0.45));
+            const ionE = Math.min(1, Math.max(0, (v - 3000) / (Vbr * 0.6 - 3000)));
+            const netE = Math.max(0, ionE * (1 - arcR * 0.9));
+            return { Vbr, arcR, netE, I: l_calcI(v, d_mm) * netE };
+        }
+        function l_calcStages(v, stageDmm) {
+            let vA = 0, maxArc = 0, effSum = 0; const ps = [];
+            stageDmm.forEach(d => {
+                const p = l_stagePhys(v, d);
+                const dv2 = 2 * p.I * (d / 1000) / (gasRHO() * l_A_EFF * gasMU());
+                const vO = Math.sqrt(Math.max(0, vA * vA + dv2));
+                const lift = gasRHO() * l_A_EFF * (vO * vO - vA * vA);
+                ps.push({ ...p, d, vIn: vA, vO, lift });
+                vA = vO; maxArc = Math.max(maxArc, p.arcR); effSum += p.netE;
+            });
+            return { vF: vA, totalLift: gasRHO() * l_A_EFF * vA * vA, maxArc, avgEff: effSum / stageDmm.length, ps };
+        }
+
+        function l_getD(i) { const el = document.getElementById('l_rd' + i); return el ? +el.value : l_stages[i].d; }
+        function l_gV() { return +document.getElementById('l_rv').value; }
+        function l_calcAll() { return l_calcStages(l_gV(), l_stages.map((_, i) => l_getD(i))); }
+
+        function l_sw(id) {
+            document.querySelectorAll('#wrapper-lin .tab').forEach((t, i) => t.classList.toggle('active', ['sim', 'opt', 'graph'][i] === id));
+            document.querySelectorAll('#wrapper-lin .view-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('l_v-' + id).classList.add('active');
+            const v = document.getElementById('l_rv').value;
+            ['l_rov', 'l_grv'].forEach(id2 => { const el = document.getElementById(id2); if (el) el.value = v; });
+            if (document.getElementById('l_ovv')) document.getElementById('l_ovv').textContent = (+v).toLocaleString('tr') + ' V';
+            if (document.getElementById('l_gvv')) document.getElementById('l_gvv').textContent = (+v).toLocaleString('tr') + ' V';
+            if (id === 'opt') l_drawOpt();
+            if (id === 'graph') l_drawGraphs();
+            if (id === 'sim') l_rsz();
+        }
+
+        let l_stages = [{ d: 38 }], l_running = true, l_ions = [], l_sparks = [], l_st = 0;
+        const l_SCOLS = ['#2563eb', '#059669', '#d97706', '#dc2626', '#7c3aed'];
+
+        function l_upd() {
+            const v = l_gV();
+            document.getElementById('l_vv').textContent = v.toLocaleString('tr') + ' V';
+            l_stages.forEach((_, i) => {
+                const d = l_getD(i); l_stages[i].d = d;
+                const el = document.getElementById('l_vd' + i); if (el) el.textContent = d + ' mm';
+            });
+            const r = l_calcAll();
+            document.getElementById('l_mw').textContent = r.vF.toFixed(2);
+            document.getElementById('l_ml2').textContent = (r.totalLift * 1000).toFixed(2);
+
+            const arcPercentage = Math.round(r.maxArc * 100);
+            document.getElementById('l_ma').textContent = arcPercentage;
+            const cardArc = document.getElementById('l_card-arc');
+            if (arcPercentage < 20) { cardArc.style.border = "1px solid var(--border-color)"; cardArc.querySelector('.val').style.color = "var(--text-main)"; }
+            else if (arcPercentage < 60) { cardArc.style.border = "2px solid var(--accent-orange)"; cardArc.querySelector('.val').style.color = "var(--accent-orange)"; }
+            else { cardArc.style.border = "2px solid var(--accent-red)"; cardArc.querySelector('.val').style.color = "var(--accent-red)"; }
+
+            const effPercent = Math.round(r.avgEff * 100);
+            const effEl = document.getElementById('l_meff');
+            effEl.textContent = effPercent + '%';
+            if (effPercent > 70) effEl.style.color = 'var(--accent-green)';
+            else if (effPercent > 40) effEl.style.color = 'var(--accent-orange)';
+            else effEl.style.color = 'var(--accent-red)';
+
+            document.getElementById('l_mkad').textContent = l_stages.length;
+            document.getElementById('l_t-v').textContent = v.toLocaleString('tr') + ' V';
+            document.getElementById('l_t-f').textContent = (r.totalLift * 1000).toFixed(2) + ' mN';
+            document.getElementById('l_t-s').textContent = r.vF.toFixed(2) + ' m/s';
+            document.getElementById('l_t-r').textContent = '%' + arcPercentage;
+
+            const wb = document.getElementById('l_wbar');
+            if (r.maxArc < 0.2) {
+                wb.style.color = 'var(--accent-green)'; wb.style.borderColor = 'var(--accent-green)'; wb.innerHTML = '🟢 GÜVENLİ İŞLETİM BÖLGESİ';
+            } else if (r.maxArc < 0.6) {
+                wb.style.color = 'var(--accent-orange)'; wb.style.borderColor = 'var(--accent-orange)'; wb.innerHTML = '🟠 UYARI: ARK (KIVILCIM) RİSKİ YÜKSEK';
+            } else {
+                wb.style.color = 'var(--accent-red)'; wb.style.borderColor = 'var(--accent-red)'; wb.innerHTML = '🔴 TEHLİKE: KISA DEVRE OLUŞUYOR';
+            }
+        }
+
+        function l_buildUI() {
+            const sc = document.getElementById('l_extra-stages'); sc.innerHTML = '';
+            for (let i = 1; i < l_stages.length; i++) {
+                sc.innerHTML += `<div class="control-group"><div class="control-label"><span>📏 Kademe ${i + 1} Aralığı (d)</span><span class="val-badge" id="l_vd${i}">${l_stages[i].d} mm</span></div><input type="range" min="5" max="80" step="1" value="${l_stages[i].d}" id="l_rd${i}" oninput="l_upd()"></div>`;
+            }
+            document.getElementById('l_btnA').disabled = l_stages.length >= 5;
+            document.getElementById('l_btnR').disabled = l_stages.length <= 1;
+        }
+
+        function l_addS() { if (l_stages.length >= 5) return; l_stages.push({ d: 38 }); l_buildUI(); l_rebuildIons(); l_upd(); }
+        function l_remS() { if (l_stages.length <= 1) return; l_stages.pop(); l_buildUI(); l_rebuildIons(); l_upd(); }
+        function l_tog() { l_running = !l_running; document.getElementById('l_btnT').innerHTML = l_running ? '⏸ Simülasyonu Duraklat' : '▶️ Simülasyonu Devam Ettir'; }
+
+        function l_drawOpt() {
+            const v = +document.getElementById('l_rov').value, d = +document.getElementById('l_rod').value;
+            document.getElementById('l_ovv').textContent = v.toLocaleString('tr') + ' V'; document.getElementById('l_odd').textContent = d + ' mm';
+            const maxK = 8; const lifts = [], vels = [], effs = []; let optK = 1, optLift = 0;
+            for (let k = 1; k <= maxK; k++) {
+                const ds = Array(k).fill(d), r = l_calcStages(v, ds);
+                lifts.push(r.totalLift); vels.push(r.vF); effs.push(r.avgEff * 100);
+                if (k > 1) { const gain = r.totalLift - lifts[k - 2]; if (gain > 0.01 && r.totalLift > optLift) { optLift = r.totalLift; optK = k; } } else { optLift = r.totalLift; optK = 1; }
+            }
+            let trueOptK = 1;
+            for (let k = 2; k <= maxK; k++) { const marginal = (lifts[k - 1] - lifts[k - 2]) / lifts[0] * 100; if (marginal > 5) trueOptK = k; }
+            document.getElementById('l_opt-k').textContent = trueOptK; document.getElementById('l_opt-v').textContent = vels[trueOptK - 1].toFixed(2); document.getElementById('l_opt-l').textContent = (lifts[trueOptK - 1] * 1000).toFixed(2);
+            document.getElementById('l_opt-eff').textContent = trueOptK > 1 ? ((effs[0] - effs[trueOptK - 1]) / (trueOptK - 1)).toFixed(1) : '0.0';
+            document.getElementById('l_opt-frow').innerHTML = `Optimum: <strong>${trueOptK} kademe</strong> &bull; Hız: <strong>${vels[trueOptK - 1].toFixed(2)} m/s</strong> &bull; İtki: <strong>${(lifts[trueOptK - 1] * 1000).toFixed(2)} mN</strong> &bull; Marjinal kazanım: <strong>${trueOptK < maxK ? ((lifts[trueOptK] - lifts[trueOptK - 1]) / lifts[0] * 100).toFixed(1) : '<1'}%</strong> / ek kademe`;
+
+            const c = document.getElementById('l_optC'); if (!c) return;
+            const CW = c.parentElement.offsetWidth, CH = c.parentElement.offsetHeight || 200;
+            c.width = CW * devicePixelRatio; c.height = CH * devicePixelRatio;
+            const cx = c.getContext('2d'); cx.scale(devicePixelRatio, devicePixelRatio);
+            const fg = '#334155', bg = '#ffffff', pad = { l: 42, r: 16, t: 16, b: 30 }, gW = CW - pad.l - pad.r, gH = CH - pad.t - pad.b, maxL = Math.max(...lifts) * 1.1;
+            cx.clearRect(0, 0, CW, CH);
+            cx.strokeStyle = 'rgba(0,0,0,0.06)'; cx.lineWidth = 0.5;
+            for (let g = 0; g <= 4; g++) { const y = pad.t + gH - (g / 4) * gH; cx.beginPath(); cx.moveTo(pad.l, y); cx.lineTo(pad.l + gW, y); cx.stroke(); cx.fillStyle = fg; cx.font = '10px sans-serif'; cx.textAlign = 'right'; cx.fillText(((g / 4) * maxL * 1000).toFixed(1), pad.l - 5, y + 3); }
+            cx.beginPath(); lifts.forEach((l, i) => { const x = pad.l + (i / (maxK - 1)) * gW, y = pad.t + gH - (l / maxL) * gH; i === 0 ? cx.moveTo(x, y) : cx.lineTo(x, y); }); cx.strokeStyle = '#059669'; cx.lineWidth = 2.5; cx.stroke();
+            const maxEff = Math.max(...effs);
+            cx.beginPath(); effs.forEach((e, i) => { const x = pad.l + (i / (maxK - 1)) * gW, y = pad.t + gH - (e / maxEff) * gH; i === 0 ? cx.moveTo(x, y) : cx.lineTo(x, y); }); cx.strokeStyle = '#d97706'; cx.lineWidth = 2; cx.setLineDash([4, 3]); cx.stroke(); cx.setLineDash([]);
+            cx.strokeStyle = fg; cx.lineWidth = 0.5; cx.beginPath(); cx.moveTo(pad.l, pad.t); cx.lineTo(pad.l, pad.t + gH); cx.lineTo(pad.l + gW, pad.t + gH); cx.stroke();
+            lifts.forEach((l, i) => { const x = pad.l + (i / (maxK - 1)) * gW, y = pad.t + gH - (l / maxL) * gH; cx.beginPath(); cx.arc(x, y, i === trueOptK - 1 ? 6 : 4, 0, Math.PI * 2); cx.fillStyle = i === trueOptK - 1 ? '#059669' : '#e2e8f0'; cx.fill(); cx.stroke(); cx.fillStyle = fg; cx.font = '11px sans-serif'; cx.textAlign = 'center'; cx.fillText(i + 1 + 'k', x, pad.t + gH + 15); });
+            const ox = pad.l + ((trueOptK - 1) / (maxK - 1)) * gW; cx.strokeStyle = 'rgba(5, 150, 105, 0.5)'; cx.lineWidth = 1.5; cx.setLineDash([4, 4]); cx.beginPath(); cx.moveTo(ox, pad.t); cx.lineTo(ox, pad.t + gH); cx.stroke(); cx.setLineDash([]); cx.fillStyle = '#059669'; cx.font = 'bold 11px sans-serif'; cx.textAlign = 'center'; cx.fillText('OPTIMUM', ox, pad.t + 8);
+        }
+
+        function l_drawGraphs() {
+            const v = +document.getElementById('l_grv').value; document.getElementById('l_gvv').textContent = v.toLocaleString('tr') + ' V';
+            const fg = '#334155', bg = '#ffffff', pad = { l: 42, r: 16, t: 16, b: 30 };
+            function prep(id) { const c = document.getElementById(id); if (!c) return null; const CW = c.parentElement.offsetWidth, CH = c.parentElement.offsetHeight; c.width = CW * devicePixelRatio; c.height = CH * devicePixelRatio; const cx = c.getContext('2d'); cx.scale(devicePixelRatio, devicePixelRatio); cx.clearRect(0, 0, CW, CH); return { cx, CW, CH, gW: CW - pad.l - pad.r, gH: CH - pad.t - pad.b }; }
+            function axes(cx, CW, CH, gW, gH) { cx.strokeStyle = fg; cx.lineWidth = 0.5; cx.beginPath(); cx.moveTo(pad.l, pad.t); cx.lineTo(pad.l, pad.t + gH); cx.lineTo(pad.l + gW, pad.t + gH); cx.stroke(); }
+            function grid(cx, gW, gH, n) { cx.strokeStyle = 'rgba(0,0,0,0.05)'; cx.lineWidth = 0.5; for (let i = 1; i <= n; i++) { const y = pad.t + gH - (i / n) * gH; cx.beginPath(); cx.moveTo(pad.l, y); cx.lineTo(pad.l + gW, y); cx.stroke(); } }
+
+            const p1 = prep('l_gC1');
+            if (p1) {
+                const { cx, CW, CH, gW, gH } = p1; grid(cx, gW, gH, 4); const ds = Array.from({ length: 80 }, (_, i) => 5 + i); const effs = ds.map(d => l_stagePhys(v, d).netE * 100), arcs = ds.map(d => l_stagePhys(v, d).arcR * 100); const optD_idx = effs.indexOf(Math.max(...effs)), optD = ds[optD_idx];
+                [effs, arcs].forEach((arr, ai) => { cx.beginPath(); arr.forEach((val, i) => { const x = pad.l + (i / (ds.length - 1)) * gW, y = pad.t + gH - (val / 100) * gH; i === 0 ? cx.moveTo(x, y) : cx.lineTo(x, y); }); cx.strokeStyle = ai === 0 ? '#059669' : '#dc2626'; cx.lineWidth = ai === 0 ? 2.5 : 2; if (ai === 1) cx.setLineDash([4, 4]); cx.stroke(); cx.setLineDash([]); });
+                const ox = pad.l + ((optD_idx) / (ds.length - 1)) * gW; cx.strokeStyle = 'rgba(5, 150, 105, 0.4)'; cx.lineWidth = 1; cx.setLineDash([3, 3]); cx.beginPath(); cx.moveTo(ox, pad.t); cx.lineTo(ox, pad.t + gH); cx.stroke(); cx.setLineDash([]); cx.fillStyle = '#059669'; cx.font = 'bold 10px sans-serif'; cx.textAlign = 'center'; cx.fillText(`d_opt=${optD}mm`, ox, pad.t + 8);
+                axes(cx, CW, CH, gW, gH); cx.fillStyle = fg; cx.font = '10px sans-serif'; cx.textAlign = 'center'; cx.fillText('5mm', pad.l, pad.t + gH + 15); cx.fillText('80mm', pad.l + gW, pad.t + gH + 15); cx.fillStyle = '#059669'; cx.textAlign = 'left'; cx.fillText('Verim %', pad.l + gW - 130, pad.t + gH - 20); cx.fillStyle = '#dc2626'; cx.fillText('Ark Riski %', pad.l + gW - 130, pad.t + gH - 8);[0, 25, 50, 75, 100].forEach(vv => { const y = pad.t + gH - (vv / 100) * gH; cx.fillStyle = fg; cx.textAlign = 'right'; cx.fillText(vv + '%', pad.l - 3, y + 3); });
+            }
+
+            const p2 = prep('l_gC2');
+            if (p2) {
+                const { cx, CW, CH, gW, gH } = p2; grid(cx, gW, gH, 4); const ds = Array.from({ length: 70 }, (_, i) => 5 + i), kColors = ['#2563eb', '#059669', '#d97706']; let maxL = 0; const allLifts = [1, 2, 3].map(k => ds.map(d => { const r = l_calcStages(v, Array(k).fill(d)); if (r.totalLift > maxL) maxL = r.totalLift; return r.totalLift; })); maxL *= 1.1;
+                allLifts.forEach((lifts, ki) => { cx.beginPath(); lifts.forEach((l, i) => { const x = pad.l + (i / (ds.length - 1)) * gW, y = pad.t + gH - (l / maxL) * gH; i === 0 ? cx.moveTo(x, y) : cx.lineTo(x, y); }); cx.strokeStyle = kColors[ki]; cx.lineWidth = 2; cx.stroke(); });
+                axes(cx, CW, CH, gW, gH); cx.fillStyle = fg; cx.font = '10px sans-serif'; cx.textAlign = 'center'; cx.fillText('5mm', pad.l, pad.t + gH + 15); cx.fillText('75mm', pad.l + gW, pad.t + gH + 15);[1, 2, 3].forEach((k, i) => { cx.fillStyle = kColors[i]; cx.textAlign = 'left'; cx.fillText('k=' + k + '', pad.l + 8 + i * 40, pad.t + gH - 8); });[0, 0.25, 0.5, 0.75, 1].forEach((r, i) => { const y = pad.t + gH - r * gH; cx.fillStyle = fg; cx.textAlign = 'right'; cx.fillText((r * maxL * 1000).toFixed(1), pad.l - 3, y + 3); }); cx.textAlign = 'left'; cx.fillText('mN', pad.l + 3, pad.t + 10);
+            }
+
+            const p3 = prep('l_gC3');
+            if (p3) {
+                const { cx, CW, CH, gW, gH } = p3; grid(cx, gW, gH, 4); const maxK = 8, d0 = 38, lifts = [], vels = []; for (let k = 1; k <= maxK; k++) { const r = l_calcStages(v, Array(k).fill(d0)); lifts.push(r.totalLift); vels.push(r.vF); } const maxL = Math.max(...lifts) * 1.1, maxV = Math.max(...vels) * 1.1;
+                cx.beginPath(); lifts.forEach((l, i) => { const x = pad.l + (i / (maxK - 1)) * gW, y = pad.t + gH - (l / maxL) * gH; i === 0 ? cx.moveTo(x, y) : cx.lineTo(x, y); }); cx.strokeStyle = '#059669'; cx.lineWidth = 2.5; cx.stroke();
+                cx.beginPath(); vels.forEach((v2, i) => { const x = pad.l + (i / (maxK - 1)) * gW, y = pad.t + gH - (v2 / maxV) * gH; i === 0 ? cx.moveTo(x, y) : cx.lineTo(x, y); }); cx.strokeStyle = '#2563eb'; cx.lineWidth = 2; cx.setLineDash([4, 4]); cx.stroke(); cx.setLineDash([]);
+                lifts.forEach((_, i) => { const x = pad.l + (i / (maxK - 1)) * gW; cx.beginPath(); cx.arc(x, pad.t + gH - (lifts[i] / maxL) * gH, 4, 0, Math.PI * 2); cx.fillStyle = '#059669'; cx.fill(); cx.stroke(); cx.fillStyle = fg; cx.font = '10px sans-serif'; cx.textAlign = 'center'; cx.fillText(i + 1, x, pad.t + gH + 15); });
+                axes(cx, CW, CH, gW, gH); cx.fillStyle = '#059669'; cx.textAlign = 'left'; cx.fillText('Kaldırma (mN)', pad.l + gW - 120, pad.t + gH - 20); cx.fillStyle = '#2563eb'; cx.fillText('Hız (m/s)', pad.l + gW - 120, pad.t + gH - 8);[0, 0.25, 0.5, 0.75, 1].forEach(r => { const y = pad.t + gH - r * gH; cx.fillStyle = fg; cx.textAlign = 'right'; cx.fillText((r * maxL * 1000).toFixed(1), pad.l - 3, y + 3); });
+            }
+        }
+
+        const l_simC = document.getElementById('l_simC'), l_sctx = l_simC.getContext('2d');
+        let l_W, l_H;
+        function l_rsz() { const cont = document.getElementById('l_sim-container'); if (!cont || cont.offsetWidth === 0) return; l_W = cont.offsetWidth; l_H = cont.offsetHeight; l_simC.width = l_W * devicePixelRatio; l_simC.height = l_H * devicePixelRatio; l_sctx.scale(devicePixelRatio, devicePixelRatio); }
+
+        function l_getScale() { const totalD = l_stages.reduce((_, __, i) => _ + l_getD(i), 0), needed = totalD * 2.2 + (l_stages.length - 1) * 28 + 120; return Math.min(1.0, (l_H * 0.75) / needed); }
+        function l_getR(sc) { return Math.min(l_W, l_H) * 0.25 * sc; }
+        function l_iso(x, y, z, sc) { return { sx: l_W * 0.50 + (x * 0.62 - z * 0.62) * sc, sy: l_H * 0.50 + (x * 0.32 + z * 0.32) * sc - y * sc }; }
+        function l_triCorners(R) { return [0, 1, 2].map(i => ({ x: R * Math.cos(Math.PI / 2 + i * 2 * Math.PI / 3), z: R * Math.sin(Math.PI / 2 + i * 2 * Math.PI / 3) })); }
+        function l_getLayout() { const sc = l_getScale(), R = l_getR(sc); let topY = l_stages.reduce((s, _, i) => s + l_getD(i) * 2.2 + 28, 0) / 2 - 14; const emitYs = [], collYs = []; l_stages.forEach((_, i) => { const d = l_getD(i); emitYs.push(topY); collYs.push(topY - d * 2.2); topY -= (d * 2.2 + 28); }); return { sc, R, RC: R * 1.28, emitYs, collYs, gndY: topY - 40 }; }
+
+        class l_Ion3D {
+            constructor(si) { this.si = si; this.reset(); }
+            reset() {
+                const r = l_calcAll(), sp = r.ps[this.si]; if (!sp) { this.life = 0; return; }
+                const L = l_getLayout(), c = l_triCorners(L.R), ci = Math.floor(Math.random() * 3), t = Math.random(), c2 = (ci + 1) % 3;
+                this.wx = c[ci].x + (c[c2].x - c[ci].x) * t + (Math.random() - 0.5) * 8; this.wz = c[ci].z + (c[c2].z - c[ci].z) * t + (Math.random() - 0.5) * 8; this.wy = L.emitYs[this.si] + (Math.random() - 0.5) * 2;
+                this.vy = Math.max(0.5, sp.netE * (sp.vO * 0.85) * (0.7 + Math.random() * 0.6)); this.vx = (Math.random() - 0.5) * 0.2; this.vz = (Math.random() - 0.5) * 0.2;
+                this.life = 1; this.r = 1.5 + Math.random() * 2; this.hue = gasHUE() + (Math.random() * 30 - 15); this.decay = 0.015 + Math.random() * 0.01; this.minY = L.collYs[this.si] - 6;
+            }
+            step() { this.wx += this.vx; this.wz += this.vz; this.wy -= this.vy * 0.88; this.vy *= 1.013; this.life -= this.decay; if (this.life <= 0 || this.wy < this.minY) this.reset(); }
+            draw() { const p = l_iso(this.wx, this.wy, this.wz, l_getLayout().sc); l_sctx.beginPath(); l_sctx.arc(p.sx, p.sy, this.r, 0, Math.PI * 2); l_sctx.fillStyle = `hsla(${this.hue},80%,55%,${this.life * 0.9})`; l_sctx.fill(); l_sctx.beginPath(); l_sctx.arc(p.sx, p.sy, this.r * 2, 0, Math.PI * 2); l_sctx.fillStyle = `hsla(${this.hue},80%,55%,${this.life * 0.2})`; l_sctx.fill(); }
+        }
+        function l_rebuildIons() { l_ions = []; l_stages.forEach((_, i) => { for (let j = 0; j < 25; j++) { const p = new l_Ion3D(i); p.wy -= Math.random() * 40; p.life = Math.random(); l_ions.push(p); } }); }
+
+        function l_drawSim() {
+            l_sctx.clearRect(0, 0, l_W, l_H);
+            if (document.getElementById('l_v-sim').classList.contains('active') === false) return;
+            const r = l_calcAll(), L = l_getLayout();
+            r.ps.forEach((p, i) => {
+                const emY = L.emitYs[i], colY = L.collYs[i], col = l_SCOLS[i % 5], c = l_triCorners(L.R), cf = l_triCorners(L.RC);
+                c.forEach(cn => { const a = l_iso(cn.x, emY, cn.z, L.sc), b = l_iso(cn.x, colY, cn.z, L.sc); l_sctx.beginPath(); l_sctx.moveTo(a.sx, a.sy); l_sctx.lineTo(b.sx, b.sy); l_sctx.strokeStyle = `rgba(148, 163, 184, 0.4)`; l_sctx.lineWidth = 1; l_sctx.setLineDash([4, 4]); l_sctx.stroke(); l_sctx.setLineDash([]); });
+                l_st++; if (p.arcR > 0.2 && l_st % Math.max(2, Math.round(13 * (1 - p.arcR))) === (i % 4)) { const ei = l_iso(c[Math.floor(Math.random() * 3)].x, emY, c[Math.floor(Math.random() * 3)].z, L.sc), cj = l_iso(cf[Math.floor(Math.random() * 3)].x, colY, cf[Math.floor(Math.random() * 3)].z, L.sc); l_sparks.push({ x1: ei.sx, y1: ei.sy, x2: cj.sx, y2: cj.sy, life: 1, segs: 7 }); }
+                l_sctx.beginPath(); const pf0 = l_iso(cf[0].x, colY, cf[0].z, L.sc); l_sctx.moveTo(pf0.sx, pf0.sy); for (let k = 1; k <= 3; k++) { const pf = l_iso(cf[k % 3].x, colY, cf[k % 3].z, L.sc); l_sctx.lineTo(pf.sx, pf.sy); } l_sctx.fillStyle = p.arcR > 0.6 ? `rgba(254, 226, 226, 0.8)` : `rgba(226, 232, 240, 0.8)`; l_sctx.fill(); l_sctx.strokeStyle = p.arcR > 0.6 ? '#ef4444' : '#64748b'; l_sctx.lineWidth = 2.5; l_sctx.stroke();
+                l_sctx.beginPath(); const pe0 = l_iso(c[0].x, emY, c[0].z, L.sc); l_sctx.moveTo(pe0.sx, pe0.sy); for (let k = 1; k <= 3; k++) { const pe = l_iso(c[k % 3].x, emY, c[k % 3].z, L.sc); l_sctx.lineTo(pe.sx, pe.sy); } l_sctx.strokeStyle = p.arcR > 0.6 ? '#ef4444' : col; l_sctx.lineWidth = 2; l_sctx.stroke();
+                const labelP = l_iso(c[0].x + 20 / L.sc, emY, c[0].z, L.sc); l_sctx.fillStyle = '#334155'; l_sctx.font = 'bold 12px sans-serif'; l_sctx.fillText(`KADEME ${i + 1}`, labelP.sx, labelP.sy); l_sctx.font = '11px sans-serif'; l_sctx.fillStyle = '#64748b'; l_sctx.fillText(`Aralık: ${p.d} mm`, labelP.sx, labelP.sy + 14);
+            });
+            l_sparks = l_sparks.filter(a => a.life > 0);
+            l_sparks.forEach(a => { const pts = [[a.x1, a.y1]]; for (let i = 1; i < a.segs; i++) { const t = i / a.segs; pts.push([a.x1 + (a.x2 - a.x1) * t + (Math.random() - 0.5) * 15, a.y1 + (a.y2 - a.y1) * t + (Math.random() - 0.5) * 8]); } pts.push([a.x2, a.y2]); l_sctx.beginPath(); l_sctx.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach(pp => l_sctx.lineTo(pp[0], pp[1])); l_sctx.strokeStyle = `rgba(245,158,11,${a.life})`; l_sctx.lineWidth = 2.5; l_sctx.stroke(); a.life -= 0.12; });
+            l_ions.forEach(p => { p.step(); p.draw(); });
+            if (r.totalLift > 0) { const liftH = Math.min(100, r.totalLift * 1000 * 3), topY = L.emitYs[0], baseP = l_iso(0, topY + 25 / L.sc, 0, L.sc), tipP = l_iso(0, topY + (25 + liftH) / L.sc, 0, L.sc); l_sctx.beginPath(); l_sctx.moveTo(baseP.sx, baseP.sy); l_sctx.lineTo(tipP.sx, tipP.sy); l_sctx.strokeStyle = 'var(--accent-green)'; l_sctx.lineWidth = 4; l_sctx.stroke(); l_sctx.beginPath(); l_sctx.moveTo(tipP.sx, tipP.sy); l_sctx.lineTo(tipP.sx - 10, tipP.sy + 14); l_sctx.lineTo(tipP.sx + 10, tipP.sy + 14); l_sctx.closePath(); l_sctx.fillStyle = 'var(--accent-green)'; l_sctx.fill(); l_sctx.fillStyle = 'var(--accent-green)'; l_sctx.font = 'bold 14px sans-serif'; l_sctx.textAlign = 'center'; l_sctx.fillText('KALDIRMA KUVVETİ (İTKİ)', tipP.sx, tipP.sy - 12); }
+        }
+
+
+        /* ==========================================================================
+           MODÜL 2: SİLİNDİRİK TAÇ-DİSK (CYLINDRICAL)
+           ========================================================================== */
+        function c_calcAeff(n, dia_mm, l_mm) {
+            const R = (dia_mm / 2) / 1000, A_tunnel = Math.PI * R * R, circ = 2 * Math.PI * R;
+            const n_sat = Math.max(1, circ / 0.010);
+            return A_tunnel * Math.min(1, n / n_sat);
+        }
+        function c_calcI(V, d_mm, n, dia_mm, l_mm) { return F_GEO * EPS0 * gasMU() * (V / (d_mm / 1000)) * (V / (d_mm / 1000)) * c_calcAeff(n, dia_mm, l_mm); }
+        function c_arcRisk(V, d) { return Math.min(1, Math.max(0, (V / paschenVbr(d) - 0.55) / 0.45)); }
+        function c_netEff(V, d) { return Math.max(0, Math.min(1, Math.max(0, (V - 3000) / (paschenVbr(d) * 0.6 - 3000))) * (1 - c_arcRisk(V, d) * 0.9)); }
+        function c_calcThrust(V, d, n, dia, l) { return c_calcI(V, d, n, dia, l) * c_netEff(V, d) * (d / 1000) / gasMU(); }
+        function c_calcSpeed(V, d, n, dia, l) { const v2 = 2 * (c_calcI(V, d, n, dia, l) * c_netEff(V, d)) * (d / 1000) / (gasRHO() * c_calcAeff(n, dia, l) * gasMU()); return v2 > 0 ? Math.sqrt(v2) : 0; }
+        function c_calcPower(V, d, n, dia, l) { return V * c_calcI(V, d, n, dia, l); }
+
+        function c_gV() { return +document.getElementById('c_rv').value; }
+        function c_gD() { return +document.getElementById('c_rd').value; }
+        function c_gN() { return +document.getElementById('c_rn').value; }
+        function c_gDia() { return +document.getElementById('c_rdia').value; }
+        function c_gL() { return +document.getElementById('c_rl').value; }
+        function c_calcAll() {
+            const V = c_gV(), d = c_gD(), n = c_gN(), dia = c_gDia(), l = c_gL(), arc = c_arcRisk(V, d), eff = c_netEff(V, d), T = c_calcThrust(V, d, n, dia, l), spd = c_calcSpeed(V, d, n, dia, l), P = c_calcPower(V, d, n, dia, l);
+            return { V, d, n, dia, l, arc, eff, T, spd, P, T_mN: T * 1000, TpP: P > 0 ? T / P * 1000 : 0 };
+        }
+
+        function c_sw(id) {
+            document.querySelectorAll('#wrapper-cyl .tab').forEach((t, i) => t.classList.toggle('active', ['sim', 'opt', 'graph'][i] === id));
+            document.querySelectorAll('#wrapper-cyl .view-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('c_v-' + id).classList.add('active');
+            const v = document.getElementById('c_rv').value;
+            ['c_rov', 'c_grv'].forEach(id2 => { const el = document.getElementById(id2); if (el) el.value = v; });
+            if (document.getElementById('c_ovv')) document.getElementById('c_ovv').textContent = (+v).toLocaleString('tr') + ' V';
+            if (document.getElementById('c_gvv')) document.getElementById('c_gvv').textContent = (+v).toLocaleString('tr') + ' V';
+            if (id === 'opt') c_drawOpt();
+            if (id === 'graph') c_drawGraphs();
+            if (id === 'sim') c_rsz();
+        }
+
+        let c_running = true, c_ions = [], c_sparks = [], c_stk = 0;
+
+        function c_upd() {
+            document.getElementById('c_vv').textContent = c_gV().toLocaleString('tr') + ' V'; document.getElementById('c_vd').textContent = c_gD() + ' mm'; document.getElementById('c_vn').textContent = c_gN(); document.getElementById('c_vdia').textContent = c_gDia() + ' mm'; document.getElementById('c_vl').textContent = c_gL() + ' mm';
+            const r = c_calcAll();
+            document.getElementById('c_mV').textContent = r.spd.toFixed(2); document.getElementById('c_mT').textContent = r.T_mN.toFixed(2); document.getElementById('c_mP').textContent = r.P.toFixed(1);
+            const arcPercentage = Math.round(r.arc * 100); document.getElementById('c_mArc').textContent = arcPercentage;
+            const cardArc = document.getElementById('c_card-arc');
+            if (arcPercentage < 20) { cardArc.style.border = "1px solid var(--border-color)"; cardArc.querySelector('.val').style.color = "var(--text-main)"; } else if (arcPercentage < 60) { cardArc.style.border = "2px solid var(--accent-orange)"; cardArc.querySelector('.val').style.color = "var(--accent-orange)"; } else { cardArc.style.border = "2px solid var(--accent-red)"; cardArc.querySelector('.val').style.color = "var(--accent-red)"; }
+            const effPercent = Math.round(r.eff * 100), effEl = document.getElementById('c_meff'); effEl.textContent = effPercent + '%';
+            if (effPercent > 70) effEl.style.color = 'var(--accent-green)'; else if (effPercent > 40) effEl.style.color = 'var(--accent-orange)'; else effEl.style.color = 'var(--accent-red)';
+            document.getElementById('c_t-v').textContent = c_gV().toLocaleString('tr') + ' V'; document.getElementById('c_t-tp').textContent = r.TpP.toFixed(3) + ' mN/W'; document.getElementById('c_t-vbr').textContent = Math.round(paschenVbr(r.d) / 1000) + ' kV'; document.getElementById('c_t-n').textContent = r.n + ' adet';
+            const wb = document.getElementById('c_wbar');
+            if (r.arc < 0.2) { wb.style.color = 'var(--accent-green)'; wb.style.borderColor = 'var(--accent-green)'; wb.innerHTML = `🟢 GÜVENLİ İŞLETİM (V_br = ${Math.round(paschenVbr(r.d) / 1000)}kV)`; } else if (r.arc < 0.6) { wb.style.color = 'var(--accent-orange)'; wb.style.borderColor = 'var(--accent-orange)'; wb.innerHTML = `🟠 UYARI: ARK RİSKİ YÜKSEK (Mesafeyi Artırın)`; } else { wb.style.color = 'var(--accent-red)'; wb.style.borderColor = 'var(--accent-red)'; wb.innerHTML = '🔴 TEHLİKE: KISA DEVRE OLUŞUYOR'; }
+        }
+
+        function c_tog() { c_running = !c_running; document.getElementById('c_btnT').innerHTML = c_running ? '⏸ Simülasyonu Duraklat' : '▶️ Simülasyonu Devam Ettir'; }
+
+        function c_drawOpt() {
+            const V = +document.getElementById('c_rov').value, dia = +document.getElementById('c_rodia').value;
+            document.getElementById('c_ovv').textContent = V.toLocaleString('tr') + ' V'; document.getElementById('c_ovdia').textContent = dia + ' mm';
+            let bd = 18, bn = 6, bl = 10, bScore = 0, bT = 0, bSpd = 0;
+            for (let d = 5; d <= 45; d++) { for (let n = 3; n <= 12; n++) { for (let l = 4; l <= 20; l += 4) { const arc = c_arcRisk(V, d), T = c_calcThrust(V, d, n, dia, l) * 1000, score = T * (1 - arc * 0.9); if (score > bScore) { bScore = score; bd = d; bn = n; bl = l; bT = T; bSpd = c_calcSpeed(V, d, n, dia, l); } } } }
+            const P = c_calcPower(V, bd, bn, dia, bl);
+            document.getElementById('c_opt-d').textContent = bd; document.getElementById('c_opt-n').textContent = bn; document.getElementById('c_opt-l').textContent = bl; document.getElementById('c_opt-T').textContent = bT.toFixed(2); document.getElementById('c_opt-v').textContent = bSpd.toFixed(2); document.getElementById('c_opt-tp').textContent = (P > 0 ? bT / P : 0).toFixed(3);
+            document.getElementById('c_opt-frow').innerHTML = `Analiz Sonucu: En iyi itki performansına <strong>d = ${bd}mm</strong>, <strong>n = ${bn} diş</strong> ve <strong>l = ${bl}mm</strong> kombinasyonu ile ulaşılmaktadır.`;
+
+            const fg = '#334155', bg = '#ffffff', pad = { l: 44, r: 16, t: 16, b: 30 };
+            function setup(id) { const c = document.getElementById(id); if (!c) return null; const CW = c.parentElement.offsetWidth, CH = c.parentElement.offsetHeight; c.width = CW * devicePixelRatio; c.height = CH * devicePixelRatio; const ctx = c.getContext('2d'); ctx.scale(devicePixelRatio, devicePixelRatio); ctx.clearRect(0, 0, CW, CH); return { ctx, gW: CW - pad.l - pad.r, gH: CH - pad.t - pad.b }; }
+            function axes(ctx, gW, gH) { ctx.strokeStyle = fg; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + gH); ctx.lineTo(pad.l + gW, pad.t + gH); ctx.stroke(); }
+            function grid(ctx, gW, gH) { ctx.strokeStyle = 'rgba(0,0,0,0.05)'; ctx.lineWidth = 0.5; for (let g = 1; g <= 4; g++) { const y = pad.t + gH - (g / 4) * gH; ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gW, y); ctx.stroke(); } }
+
+            const p1 = setup('c_optC1');
+            if (p1) {
+                const { ctx, gW, gH } = p1; grid(ctx, gW, gH); const ds = Array.from({ length: 44 }, (_, i) => 5 + i), Ts = ds.map(d => c_calcThrust(V, d, bn, dia, bl) * 1000), Ss = ds.map(d => c_calcSpeed(V, d, bn, dia, bl)), maxT = Math.max(...Ts) * 1.1 || 1, maxS = Math.max(...Ss) * 1.1 || 1;
+                ctx.beginPath(); Ts.forEach((t, i) => { const x = pad.l + (i / 43) * gW, y = pad.t + gH - (t / maxT) * gH; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }); ctx.strokeStyle = '#d97706'; ctx.lineWidth = 2.5; ctx.stroke();
+                ctx.beginPath(); Ss.forEach((s, i) => { const x = pad.l + (i / 43) * gW, y = pad.t + gH - (s / maxS) * gH; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }); ctx.strokeStyle = '#059669'; ctx.lineWidth = 2; ctx.stroke();
+                const ox = pad.l + ((bd - 5) / 43) * gW; ctx.strokeStyle = 'rgba(5,150,105,0.5)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(ox, pad.t); ctx.lineTo(ox, pad.t + gH); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#059669'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`OPT`, ox, pad.t + 8);
+                axes(ctx, gW, gH); ctx.fillStyle = fg; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('5mm', pad.l, pad.t + gH + 15); ctx.fillText('48mm', pad.l + gW, pad.t + gH + 15); ctx.fillStyle = '#d97706'; ctx.textAlign = 'left'; ctx.fillText('Thrust (mN)', pad.l + 4, pad.t + gH - 20); ctx.fillStyle = '#059669'; ctx.fillText('Hız (m/s)', pad.l + 4, pad.t + gH - 8);[0, 0.5, 1].forEach(r2 => { ctx.fillStyle = fg; ctx.font = '10px sans-serif'; ctx.textAlign = 'right'; ctx.fillText((r2 * maxT).toFixed(2), pad.l - 3, pad.t + gH - r2 * gH + 4); });
+            }
+
+            const p2 = setup('c_optC2');
+            if (p2) {
+                const { ctx, gW, gH } = p2; grid(ctx, gW, gH); const ns = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12], Ts = ns.map(n => c_calcThrust(V, bd, n, dia, bl) * 1000), maxT = Math.max(...Ts) * 1.1 || 1;
+                ctx.beginPath(); Ts.forEach((t, i) => { const x = pad.l + (i / (ns.length - 1)) * gW, y = pad.t + gH - (t / maxT) * gH; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }); ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 2; ctx.stroke();
+                Ts.forEach((t, i) => { const x = pad.l + (i / (ns.length - 1)) * gW, y = pad.t + gH - (t / maxT) * gH; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = ns[i] === bn ? '#059669' : '#2563eb'; ctx.fill(); });
+                axes(ctx, gW, gH); ctx.fillStyle = fg; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ns.forEach((n, i) => ctx.fillText(n, pad.l + (i / (ns.length - 1)) * gW, pad.t + gH + 15)); ctx.fillStyle = '#2563eb'; ctx.textAlign = 'left'; ctx.fillText('Thrust (mN)', pad.l + 4, pad.t + gH - 8);[0, 0.5, 1].forEach(r2 => { ctx.fillStyle = fg; ctx.font = '10px sans-serif'; ctx.textAlign = 'right'; ctx.fillText((r2 * maxT).toFixed(2), pad.l - 3, pad.t + gH - r2 * gH + 4); });
+            }
+        }
+
+        function c_drawGraphs() {
+            const V = +document.getElementById('c_grv').value; document.getElementById('c_gvv').textContent = V.toLocaleString('tr') + ' V';
+            const fg = '#334155', bg = '#ffffff', pad = { l: 44, r: 16, t: 16, b: 30 };
+            function setup(id) { const c = document.getElementById(id); if (!c) return null; const CW = c.parentElement.offsetWidth, CH = c.parentElement.offsetHeight; c.width = CW * devicePixelRatio; c.height = CH * devicePixelRatio; const ctx = c.getContext('2d'); ctx.scale(devicePixelRatio, devicePixelRatio); ctx.clearRect(0, 0, CW, CH); return { ctx, gW: CW - pad.l - pad.r, gH: CH - pad.t - pad.b }; }
+            function axes(ctx, gW, gH) { ctx.strokeStyle = fg; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + gH); ctx.lineTo(pad.l + gW, pad.t + gH); ctx.stroke(); }
+            function grid(ctx, gW, gH) { ctx.strokeStyle = 'rgba(0,0,0,0.05)'; ctx.lineWidth = 0.5; for (let g = 1; g <= 4; g++) { const y = pad.t + gH - (g / 4) * gH; ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gW, y); ctx.stroke(); } }
+
+            const p1 = setup('c_gC1');
+            if (p1) {
+                const { ctx, gW, gH } = p1; grid(ctx, gW, gH); const Vs = Array.from({ length: 50 }, (_, i) => 5000 + i * 700), dList = [10, 18, 28, 40], cols = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']; let maxT = 0; const allT = dList.map(d => Vs.map(v => { const t = c_calcThrust(v, d, 6, 40, 10) * 1000; if (t > maxT) maxT = t; return t; })); maxT = maxT * 1.1 || 1;
+                allT.forEach((arr, di) => { ctx.beginPath(); arr.forEach((t, i) => { const x = pad.l + (i / 49) * gW, y = pad.t + gH - (t / maxT) * gH; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }); ctx.strokeStyle = cols[di]; ctx.lineWidth = 2; ctx.stroke(); });
+                const xV = pad.l + ((V - 5000) / 34650) * gW; ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(xV, pad.t); ctx.lineTo(xV, pad.t + gH); ctx.stroke(); ctx.setLineDash([]);
+                axes(ctx, gW, gH); ctx.fillStyle = fg; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('5kV', pad.l, pad.t + gH + 15); ctx.fillText('40kV', pad.l + gW, pad.t + gH + 15); dList.forEach((d, i) => { ctx.fillStyle = cols[i]; ctx.textAlign = 'left'; ctx.fillText(`d=${d}mm`, pad.l + 4 + i * 44, pad.t + gH - 8); });[0, 0.5, 1].forEach(r2 => { ctx.fillStyle = fg; ctx.font = '10px sans-serif'; ctx.textAlign = 'right'; ctx.fillText((r2 * maxT).toFixed(2), pad.l - 3, pad.t + gH - r2 * gH + 4); }); ctx.fillStyle = fg; ctx.textAlign = 'left'; ctx.fillText('mN', pad.l + 3, pad.t + 10);
+            }
+
+            const p2 = setup('c_gC2');
+            if (p2) {
+                const { ctx, gW, gH } = p2; grid(ctx, gW, gH); const ds = Array.from({ length: 44 }, (_, i) => 5 + i), Ts = ds.map(d => c_calcThrust(V, d, 6, 40, 10) * 1000), Arcs = ds.map(d => c_arcRisk(V, d) * 100), maxT = Math.max(...Ts) * 1.1 || 1;
+                ctx.beginPath(); Ts.forEach((t, i) => { const x = pad.l + (i / 43) * gW, y = pad.t + gH - (t / maxT) * gH; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }); ctx.strokeStyle = '#059669'; ctx.lineWidth = 2.5; ctx.stroke();
+                ctx.beginPath(); Arcs.forEach((a, i) => { const x = pad.l + (i / 43) * gW, y = pad.t + gH - (a / 100) * gH; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }); ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+                axes(ctx, gW, gH); ctx.fillStyle = fg; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('5mm', pad.l, pad.t + gH + 15); ctx.fillText('48mm', pad.l + gW, pad.t + gH + 15); ctx.fillStyle = '#059669'; ctx.textAlign = 'left'; ctx.fillText('Thrust (mN)', pad.l + 4, pad.t + gH - 20); ctx.fillStyle = '#dc2626'; ctx.fillText('Ark riski %', pad.l + 4, pad.t + gH - 8);[0, 0.5, 1].forEach(r2 => { ctx.fillStyle = fg; ctx.font = '10px sans-serif'; ctx.textAlign = 'right'; ctx.fillText((r2 * maxT).toFixed(2), pad.l - 3, pad.t + gH - r2 * gH + 4); });
+            }
+
+            const p3 = setup('c_gC3');
+            if (p3) {
+                const { ctx, gW, gH } = p3; grid(ctx, gW, gH); const ds = Array.from({ length: 44 }, (_, i) => 5 + i), nList = [3, 6, 9, 12], cols = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']; let maxTP = 0; const allTP = nList.map(n => ds.map(d => { const T = c_calcThrust(V, d, n, 40, 10), P = c_calcPower(V, d, n, 40, 10); const tp = P > 0 ? T / P * 1000 : 0; if (tp > maxTP) maxTP = tp; return tp; })); maxTP = maxTP * 1.1 || 1;
+                allTP.forEach((arr, ni) => { ctx.beginPath(); arr.forEach((tp, i) => { const x = pad.l + (i / 43) * gW, y = pad.t + gH - (tp / maxTP) * gH; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }); ctx.strokeStyle = cols[ni]; ctx.lineWidth = 2; ctx.stroke(); });
+                axes(ctx, gW, gH); ctx.fillStyle = fg; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('5mm', pad.l, pad.t + gH + 15); ctx.fillText('48mm', pad.l + gW, pad.t + gH + 15); nList.forEach((n, i) => { ctx.fillStyle = cols[i]; ctx.textAlign = 'left'; ctx.fillText(`n=${n}`, pad.l + 4 + i * 36, pad.t + gH - 8); });[0, 0.5, 1].forEach(r2 => { ctx.fillStyle = fg; ctx.font = '10px sans-serif'; ctx.textAlign = 'right'; ctx.fillText((r2 * maxTP).toFixed(3), pad.l - 3, pad.t + gH - r2 * gH + 4); }); ctx.fillStyle = fg; ctx.textAlign = 'left'; ctx.fillText('mN/W', pad.l + 3, pad.t + 10);
+            }
+        }
+
+        const c_simC = document.getElementById('c_simC'), c_sctx = c_simC.getContext('2d');
+        let c_W, c_H;
+        function c_rsz() { const cont = document.getElementById('c_sim-container'); if (!cont || cont.offsetWidth === 0) return; c_W = cont.offsetWidth; c_H = cont.offsetHeight; c_simC.width = c_W * devicePixelRatio; c_simC.height = c_H * devicePixelRatio; c_sctx.scale(devicePixelRatio, devicePixelRatio); }
+
+        class c_Ion {
+            constructor(ti) { this.ti = ti; this.reset(); }
+            reset() { const r = c_calcAll(), n = c_gN(), d_px = c_gD() * 3.5, l_px = c_gL() * 3.5, dia_px = c_gDia() * 3.5, cx = c_W * 0.65, cy = c_H * 0.50, diskX = c_W * 0.20, angle = this.ti * (2 * Math.PI / n) - Math.PI / 2, toothR = dia_px / 2, bodyLeftX = cx - dia_px * 0.55; this.x = bodyLeftX + (Math.random() - 0.5) * 4; this.y = cy + toothR * Math.sin(angle) + (Math.random() - 0.5) * 5; const speed = Math.max(0.8, r.spd * 2.5 * (0.6 + Math.random() * 0.8)); this.vx = -speed * (0.85 + Math.random() * 0.3); this.vy = (Math.random() - 0.5) * speed * 0.25; this.life = 1; this.r = 1.5 + Math.random() * 1.5; this.hue = gasHUE() + (Math.random() * 40 - 20); this.decay = 0.009 + Math.random() * 0.007; this.diskX = diskX; }
+            step() { this.x += this.vx; this.y += this.vy; this.life -= this.decay; if (this.life <= 0 || this.x < this.diskX - 5) this.reset(); }
+            draw() { c_sctx.beginPath(); c_sctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); c_sctx.fillStyle = `hsla(${this.hue},80%,55%,${this.life * 0.9})`; c_sctx.fill(); c_sctx.beginPath(); c_sctx.arc(this.x, this.y, this.r * 2, 0, Math.PI * 2); c_sctx.fillStyle = `hsla(${this.hue},80%,55%,${this.life * 0.2})`; c_sctx.fill(); }
+        }
+
+        function c_rebuildIons() { c_ions = []; const n = c_gN(); for (let ti = 0; ti < n; ti++) { for (let j = 0; j < 8; j++) { const p = new c_Ion(ti); p.x += p.vx * Math.random() * 15; p.life = Math.random(); c_ions.push(p); } } }
+
+        function c_drawSim() {
+            c_sctx.clearRect(0, 0, c_W, c_H);
+            if (document.getElementById('c_v-sim').classList.contains('active') === false) return;
+            const r = c_calcAll(), n = c_gN(), d_mm = c_gD(), l_mm = c_gL(), dia_mm = c_gDia(), scale = Math.min(c_W, c_H) * 0.45 / Math.max(dia_mm / 2, 30), dia_px = dia_mm * scale, l_px = l_mm * scale, d_px = d_mm * scale, diskThick = Math.max(8, dia_px * 0.12), bodyX = c_W * 0.65, cy = c_H * 0.50, bodyLeftX = bodyX - dia_px * 0.6, diskX = bodyLeftX - d_px, diskLeftX = diskX - diskThick;
+            for (let row = -3; row <= 3; row++) { const y0 = cy + row * (dia_px * 0.28), inPipe = Math.abs(y0 - cy) < dia_px * 0.45; c_sctx.beginPath(); c_sctx.moveTo(c_W * 0.95, y0); c_sctx.lineTo(bodyX + dia_px * 0.55, y0); if (inPipe) c_sctx.lineTo(diskLeftX - 10, y0); c_sctx.strokeStyle = `rgba(148, 163, 184,${inPipe ? 0.2 + r.spd * 0.05 : 0.1})`; c_sctx.lineWidth = inPipe ? 1.5 : 0.8; c_sctx.stroke(); if (inPipe) { c_sctx.beginPath(); c_sctx.moveTo(diskLeftX - 10, y0); c_sctx.lineTo(10, y0 + (row * 3)); c_sctx.strokeStyle = `rgba(148, 163, 184,${0.2 + r.spd * 0.06})`; c_sctx.lineWidth = 1.5; c_sctx.stroke(); } }
+            const diskGrad = c_sctx.createLinearGradient(diskLeftX, cy - dia_px / 2, diskX, cy - dia_px / 2); diskGrad.addColorStop(0, 'rgba(217, 119, 6, 0.7)'); diskGrad.addColorStop(0.5, 'rgba(245, 158, 11, 0.9)'); diskGrad.addColorStop(1, 'rgba(217, 119, 6, 0.8)'); c_sctx.beginPath(); c_sctx.roundRect(diskLeftX, cy - dia_px / 2, diskThick, dia_px, 4); c_sctx.fillStyle = r.arc > 0.6 ? `rgba(254, 226, 226, 0.9)` : diskGrad; c_sctx.fill(); c_sctx.strokeStyle = r.arc > 0.6 ? '#ef4444' : '#b45309'; c_sctx.lineWidth = 2; c_sctx.stroke();
+            const bodyW = dia_px * 1.1, bodyGrad = c_sctx.createLinearGradient(bodyX - bodyW / 2, cy - dia_px / 2, bodyX + bodyW / 2, cy + dia_px / 2); bodyGrad.addColorStop(0, 'rgba(248, 250, 252, 0.9)'); bodyGrad.addColorStop(1, 'rgba(203, 213, 225, 0.6)'); c_sctx.beginPath(); c_sctx.roundRect(bodyX - bodyW / 2, cy - dia_px / 2 - 6, bodyW, 12, 4); c_sctx.fillStyle = 'rgba(203, 213, 225, 0.8)'; c_sctx.fill(); c_sctx.beginPath(); c_sctx.roundRect(bodyX - bodyW / 2, cy + dia_px / 2 - 6, bodyW, 12, 4); c_sctx.fillStyle = 'rgba(203, 213, 225, 0.8)'; c_sctx.fill(); c_sctx.beginPath(); c_sctx.rect(bodyX - bodyW / 2 + 4, cy - dia_px / 2 + 6, bodyW - 8, dia_px - 12); c_sctx.fillStyle = 'rgba(15, 23, 42, 0.85)'; c_sctx.fill();
+            for (let i = 0; i < n; i++) { const angle = i * (2 * Math.PI / n) - Math.PI / 2, toothR = dia_px / 2 * 0.85, baseY = cy + toothR * Math.sin(angle), baseX = bodyLeftX, tipX = baseX - l_px, tipY = baseY, halfW = Math.max(3, l_px * 0.25); c_sctx.beginPath(); c_sctx.moveTo(tipX, tipY); c_sctx.lineTo(diskX, cy + (tipY - cy) * 0.3); c_sctx.strokeStyle = `rgba(148, 163, 184, 0.5)`; c_sctx.lineWidth = 1; c_sctx.setLineDash([4, 4]); c_sctx.stroke(); c_sctx.setLineDash([]); c_stk++; if (r.arc > 0.2 && c_stk % Math.max(2, Math.round(11 * (1 - r.arc))) === (i % n)) { c_sparks.push({ x1: tipX, y1: tipY, x2: diskX + (Math.random() - 0.5) * 8, y2: tipY + (Math.random() - 0.5) * 10, life: 1, segs: 5 + Math.floor(Math.random() * 4) }); } c_sctx.beginPath(); c_sctx.moveTo(tipX, tipY); c_sctx.lineTo(baseX, baseY - halfW); c_sctx.lineTo(baseX, baseY + halfW); c_sctx.closePath(); c_sctx.fillStyle = r.arc > 0.6 ? '#fca5a5' : '#e2e8f0'; c_sctx.fill(); c_sctx.strokeStyle = r.arc > 0.6 ? '#ef4444' : '#64748b'; c_sctx.lineWidth = 1.5; c_sctx.stroke(); const coronaMax = (r.V / 40000) * 10; for (let rr = coronaMax; rr > 0; rr -= 2.5) { c_sctx.beginPath(); c_sctx.arc(tipX, tipY, rr, 0, Math.PI * 2); c_sctx.fillStyle = `rgba(59, 130, 246,${(r.V / 40000) * 0.1 * (rr / coronaMax)})`; c_sctx.fill(); } c_sctx.beginPath(); c_sctx.arc(tipX, tipY, 3, 0, Math.PI * 2); c_sctx.fillStyle = r.arc > 0.6 ? '#ef4444' : '#60a5fa'; c_sctx.fill(); }
+            c_sparks = c_sparks.filter(s => s.life > 0); c_sparks.forEach(s => { const pts = [[s.x1, s.y1]]; for (let i = 1; i < s.segs; i++) { const t2 = i / s.segs; pts.push([s.x1 + (s.x2 - s.x1) * t2 + (Math.random() - 0.5) * 11, s.y1 + (s.y2 - s.y1) * t2 + (Math.random() - 0.5) * 8]); } pts.push([s.x2, s.y2]); c_sctx.beginPath(); c_sctx.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach(p => c_sctx.lineTo(p[0], p[1])); c_sctx.strokeStyle = `rgba(245, 158, 11,${s.life})`; c_sctx.lineWidth = 2.5; c_sctx.stroke(); s.life -= 0.15; });
+            c_ions.forEach(p => { p.step(); p.draw(); });
+            const tMN = r.T_mN, tPx = Math.min(80, tMN * 0.3); if (tPx > 3) { const ax = diskLeftX - 25, ay = cy; c_sctx.beginPath(); c_sctx.moveTo(ax, ay); c_sctx.lineTo(ax - tPx, ay); c_sctx.strokeStyle = 'var(--accent-green)'; c_sctx.lineWidth = 4; c_sctx.stroke(); c_sctx.beginPath(); c_sctx.moveTo(ax - tPx, ay); c_sctx.lineTo(ax - tPx + 12, ay - 7); c_sctx.lineTo(ax - tPx + 12, ay + 7); c_sctx.closePath(); c_sctx.fillStyle = 'var(--accent-green)'; c_sctx.fill(); c_sctx.fillStyle = 'var(--accent-green)'; c_sctx.font = 'bold 12px sans-serif'; c_sctx.textAlign = 'right'; c_sctx.fillText(`İTKİ: ${tMN.toFixed(1)} mN`, ax - tPx - 8, ay + 4); }
+            const mx = (bodyLeftX + diskX) / 2, my = cy - dia_px * 0.6; c_sctx.strokeStyle = '#94a3b8'; c_sctx.lineWidth = 1; c_sctx.beginPath(); c_sctx.moveTo(bodyLeftX, my - 6); c_sctx.lineTo(bodyLeftX, my + 6); c_sctx.stroke(); c_sctx.beginPath(); c_sctx.moveTo(diskX, my - 6); c_sctx.lineTo(diskX, my + 6); c_sctx.stroke(); c_sctx.beginPath(); c_sctx.moveTo(bodyLeftX, my); c_sctx.lineTo(diskX, my); c_sctx.stroke(); c_sctx.fillStyle = '#475569'; c_sctx.font = 'bold 11px sans-serif'; c_sctx.textAlign = 'center'; c_sctx.fillText(`d = ${d_mm} mm`, mx, my - 8);
+            c_sctx.beginPath(); c_sctx.moveTo(c_W * 0.98, cy); c_sctx.lineTo(c_W * 0.85, cy); c_sctx.strokeStyle = '#94a3b8'; c_sctx.lineWidth = 2; c_sctx.stroke(); c_sctx.beginPath(); c_sctx.moveTo(c_W * 0.85, cy); c_sctx.lineTo(c_W * 0.85 + 10, cy - 6); c_sctx.lineTo(c_W * 0.85 + 10, cy + 6); c_sctx.closePath(); c_sctx.fillStyle = '#94a3b8'; c_sctx.fill(); c_sctx.fillStyle = '#475569'; c_sctx.font = 'bold 11px sans-serif'; c_sctx.textAlign = 'right'; c_sctx.fillText('HAVA GİRİŞİ', c_W * 0.96, cy - 12);
+        }
+
+        /* ==========================================================================
+           ZEPLİN MODÜLÜ - FİZİK MOTORU VE GÖRSELLEŞTİRME
+           ========================================================================== */
+        let z_running = false, z_v = 0, z_a = 0, z_p = 0, z_bg = 0;
+        const AIR_RHO = 1.225;
+        const Z_AREA = 0.025;
+
+        function z_rsz() {
+            const c = document.getElementById('z_sim-container');
+            const cv = document.getElementById('z_simC');
+            if (!c || !cv || c.offsetWidth === 0) return;
+            const w = c.offsetWidth, h = c.offsetHeight;
+            cv.width = w * devicePixelRatio; cv.height = h * devicePixelRatio;
+            const ctx = cv.getContext('2d');
+            ctx.scale(devicePixelRatio, devicePixelRatio);
+        }
+
+        function z_upd() {
+            const tVal = document.getElementById('z_rT')?.value;
+            const mVal = document.getElementById('z_rM')?.value;
+            const cVal = document.getElementById('z_rC')?.value;
+            if (document.getElementById('z_vT')) document.getElementById('z_vT').textContent = tVal + " mN";
+            if (document.getElementById('z_vM')) document.getElementById('z_vM').textContent = mVal + " g";
+            if (document.getElementById('z_vC')) document.getElementById('z_vC').textContent = (cVal / 100).toFixed(2);
+            // Gaz bilgisini güncelle
+            const _zg = GASES[currentGas];
+            const _ztg = document.getElementById('z_t-gas');
+            if (_ztg) _ztg.textContent = _zg.name + ' — ' + _zg.rho.toFixed(3) + ' kg/m³';
+            z_updateStats();
+        }
+
+        function z_updateStats() {
+            const F_thrust = parseFloat(document.getElementById('z_rT')?.value || 0) / 1000;
+            const mass = parseFloat(document.getElementById('z_rM')?.value || 0) / 1000;
+            const Cd = parseFloat(document.getElementById('z_rC')?.value || 0) / 100;
+            // Anlık fizik önizleme (durağan)
+            const F_drag_preview = 0.5 * gasRHO() * (z_v * z_v) * Cd * Z_AREA;
+            const F_net_preview = F_thrust - F_drag_preview;
+            if (document.getElementById('z_val_drag')) document.getElementById('z_val_drag').textContent = F_drag_preview.toFixed(4);
+            if (document.getElementById('z_val_fnet')) document.getElementById('z_val_fnet').textContent = F_net_preview.toFixed(4);
+            if (document.getElementById('z_val_dist')) document.getElementById('z_val_dist').textContent = z_p.toFixed(2);
+            if (document.getElementById('z_out_v')) document.getElementById('z_out_v').textContent = z_v.toFixed(2);
+            if (document.getElementById('z_out_a')) document.getElementById('z_out_a').textContent = z_a.toFixed(3);
+            const _tVal = document.getElementById('z_rT')?.value || 0;
+            const _mVal = document.getElementById('z_rM')?.value || 0;
+            const _cVal = document.getElementById('z_rC')?.value || 0;
+            if (document.getElementById('z_t-thrust')) document.getElementById('z_t-thrust').textContent = _tVal + ' mN';
+            if (document.getElementById('z_t-mass')) document.getElementById('z_t-mass').textContent = _mVal + ' g';
+            if (document.getElementById('z_t-cd')) document.getElementById('z_t-cd').textContent = (_cVal / 100).toFixed(2);
+        }
+
+        function z_tog() {
+            z_running = !z_running;
+            const btn = document.getElementById('z_btnT');
+            if (btn) {
+                btn.textContent = z_running ? "⏸ Duraklat" : "▶️ Başlat";
+                btn.style.background = z_running ? "var(--accent-red)" : "var(--accent-blue)";
+            }
+        }
+
+        function z_reset() {
+            z_v = 0; z_a = 0; z_p = 0; z_bg = 0; z_running = false;
+            const btn = document.getElementById('z_btnT');
+            if (btn) { btn.textContent = "▶️ Başlat"; btn.style.background = "var(--accent-blue)"; }
+            z_updateStats();
+        }
+
+        function z_physicsStep() {
+            if (!z_running) return;
+            const F_thrust = parseFloat(document.getElementById('z_rT')?.value || 0) / 1000;
+            const mass = parseFloat(document.getElementById('z_rM')?.value || 0) / 1000;
+            const Cd = parseFloat(document.getElementById('z_rC')?.value || 0) / 100;
+            const dt = 1 / 60;
+            const F_drag = 0.5 * gasRHO() * (z_v * z_v) * Cd * Z_AREA;
+            const F_net = F_thrust - F_drag;
+            z_a = F_net / (mass || 0.001);
+            z_v += z_a * dt;
+            if (z_v < 0) z_v = 0;
+            z_p += z_v * dt;
+            z_bg = (z_bg + z_v * 3) % 3000;
+            z_updateStats();
+        }
+
+        function z_draw() {
+            const cv = document.getElementById('z_simC');
+            if (!cv || cv.width === 0) return;
+            const ctx = cv.getContext('2d');
+            const w = cv.width / devicePixelRatio, h = cv.height / devicePixelRatio;
+            ctx.clearRect(0, 0, w, h);
+
+            // Gökyüzü
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+            skyGrad.addColorStop(0, '#bfdbfe'); skyGrad.addColorStop(1, '#e0f2fe');
+            ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, w, h);
+
+            // Zemin çizgisi
+            ctx.fillStyle = '#86efac';
+            ctx.fillRect(0, h - 30, w, 30);
+            ctx.fillStyle = '#4ade80';
+            ctx.fillRect(0, h - 30, w, 4);
+
+            // Yatay çizgiler (hareket hissi)
+            for (let i = 0; i < 5; i++) {
+                const lineX = ((i * (w / 4)) - z_bg * 0.5) % w;
+                ctx.strokeStyle = 'rgba(148,163,184,0.25)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(lineX, 0); ctx.lineTo(lineX, h - 30); ctx.stroke();
+            }
+
+            // Bulutlar
+            ctx.fillStyle = "rgba(255,255,255,0.88)";
+            for (let i = 0; i < 6; i++) {
+                let bx = ((i * 380 + 60) - z_bg * 0.3) % (w + 300) - 100;
+                const by = 55 + (i % 3) * 65;
+                ctx.beginPath();
+                ctx.arc(bx, by, 28 + i % 2 * 10, 0, Math.PI * 2);
+                ctx.arc(bx + 28, by - 8, 36, 0, Math.PI * 2);
+                ctx.arc(bx + 55, by, 24, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Zeplin Konumu
+            const zx = w * 0.30, zy = h * 0.42;
+
+            // İyon egzoz akımı
+            if (z_running && z_v > 0.05) {
+                const exhaustLen = 30 + z_v * 18;
+                const grad = ctx.createLinearGradient(zx - 80, zy, zx - 80 - exhaustLen, zy);
+                grad.addColorStop(0, "rgba(56,189,248,0.55)");
+                grad.addColorStop(0.5, "rgba(99,102,241,0.3)");
+                grad.addColorStop(1, "rgba(56,189,248,0)");
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.moveTo(zx - 78, zy - 10);
+                ctx.lineTo(zx - 78 - exhaustLen, zy);
+                ctx.lineTo(zx - 78, zy + 10);
+                ctx.fill();
+                // Küçük iyon parçacıkları
+                for (let p = 0; p < 6; p++) {
+                    const px = zx - 90 - (z_v * 8 * p * 0.4) % exhaustLen;
+                    const py = zy + (Math.sin(z_bg * 0.05 + p) * 6);
+                    ctx.beginPath(); ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(99,102,241,${0.7 - p * 0.1})`; ctx.fill();
+                }
+            }
+
+            // Zeplin gövdesi
+            ctx.save();
+            ctx.shadowBlur = 18; ctx.shadowColor = "rgba(30,58,138,0.15)";
+            // Hafif titreşim efekti
+            const wobble = z_running ? Math.sin(z_bg * 0.08) * 1.5 : 0;
+
+            // Gövde (elips)
+            const bodyGrad = ctx.createLinearGradient(zx, zy - 34 + wobble, zx, zy + 34 + wobble);
+            bodyGrad.addColorStop(0, '#f0f9ff'); bodyGrad.addColorStop(0.4, '#e0f2fe');
+            bodyGrad.addColorStop(1, '#bae6fd');
+            ctx.fillStyle = bodyGrad;
+            ctx.strokeStyle = '#1e40af'; ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.ellipse(zx, zy + wobble, 92, 34, 0, 0, Math.PI * 2);
+            ctx.fill(); ctx.stroke();
+
+            // Gövde üstü çizgi detayı
+            ctx.strokeStyle = 'rgba(148,163,184,0.5)'; ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.ellipse(zx, zy + wobble - 8, 70, 16, 0, Math.PI, Math.PI * 2);
+            ctx.stroke();
+
+            // Gondol (kabin)
+            const gondolGrad = ctx.createLinearGradient(zx - 22, zy + 34 + wobble, zx + 22, zy + 50 + wobble);
+            gondolGrad.addColorStop(0, '#475569'); gondolGrad.addColorStop(1, '#334155');
+            ctx.fillStyle = gondolGrad;
+            ctx.beginPath(); ctx.roundRect(zx - 24, zy + 33 + wobble, 48, 16, 4); ctx.fill();
+            ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1; ctx.stroke();
+
+            // Gondol pencereler
+            for (let wi = 0; wi < 3; wi++) {
+                ctx.beginPath(); ctx.arc(zx - 14 + wi * 14, zy + 41 + wobble, 3, 0, Math.PI * 2);
+                ctx.fillStyle = '#bae6fd'; ctx.fill();
+                ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 0.5; ctx.stroke();
+            }
+
+            // Arka stabilizatör kanatlar
+            ctx.fillStyle = '#64748b';
+            ctx.beginPath();
+            ctx.moveTo(zx - 78, zy + wobble);
+            ctx.lineTo(zx - 108, zy - 28 + wobble);
+            ctx.lineTo(zx - 108, zy + 28 + wobble);
+            ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = '#334155'; ctx.lineWidth = 1; ctx.stroke();
+
+            // Üst dikey fin
+            ctx.beginPath();
+            ctx.moveTo(zx - 60, zy - 34 + wobble);
+            ctx.lineTo(zx - 80, zy - 58 + wobble);
+            ctx.lineTo(zx - 40, zy - 34 + wobble);
+            ctx.closePath(); ctx.fill();
+
+            // İtki oku (sağa doğru)
+            if (z_running && z_v > 0.3) {
+                const arrowLen = Math.min(60, z_v * 8);
+                ctx.strokeStyle = '#059669'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(zx + 80, zy + wobble); ctx.lineTo(zx + 80 + arrowLen, zy + wobble); ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(zx + 80 + arrowLen + 8, zy + wobble);
+                ctx.lineTo(zx + 80 + arrowLen - 4, zy - 7 + wobble);
+                ctx.lineTo(zx + 80 + arrowLen - 4, zy + 7 + wobble);
+                ctx.closePath(); ctx.fillStyle = '#059669'; ctx.fill();
+                ctx.fillStyle = '#059669'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(`${z_v.toFixed(1)} m/s`, zx + 80 + arrowLen / 2, zy - 12 + wobble);
+            }
+
+            ctx.restore();
+
+            // Mesafe göstergesi
+            if (z_p > 0.5) {
+                ctx.fillStyle = 'rgba(30,58,138,0.8)'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left';
+                ctx.fillText(`📍 Kat edilen mesafe: ${z_p.toFixed(1)} m`, 16, h - 45);
+            }
+
+            // Durum etiketi
+            const stateLabel = !z_running ? '⏸ Beklemede' : z_v < 0.1 ? '⚡ İvmeleniyor...' : z_a > 0.001 ? '🚀 Hızlanıyor' : '✈️ Sabit Hız';
+            ctx.fillStyle = 'rgba(30,64,175,0.85)'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'right';
+            ctx.fillText(stateLabel, w - 14, 24);
+        }
+
+        /* ==========================================================================
+           GLOBAL BAŞLATMA VE DÖNGÜ (LOOP)
+           ========================================================================== */
+        function globalLoop() {
+            if (currentMode === 'lin') { if (l_running) l_drawSim(); }
+            else if (currentMode === 'cyl') { if (c_running) c_drawSim(); }
+            else if (currentMode === 'zep') { z_physicsStep(); z_draw(); }
+            requestAnimationFrame(globalLoop);
+        }
+
+        window.addEventListener('resize', () => {
+            l_rsz(); c_rsz(); z_rsz();
+            if (currentMode === 'lin') { l_drawOpt(); l_drawGraphs(); }
+            else if (currentMode === 'cyl') { c_drawOpt(); c_drawGraphs(); }
+        });
+
+        // İlk başlatma
+        l_buildUI(); l_rebuildIons(); l_upd();
+        c_rebuildIons(); c_upd();
+        globalLoop();
+
+        setTimeout(() => { l_drawOpt(); l_drawGraphs(); c_drawOpt(); c_drawGraphs(); }, 200);
+
+    </script>
+</body>
+
+</html>
